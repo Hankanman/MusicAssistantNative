@@ -17,35 +17,10 @@
 #include "playermodel.h"
 #include "queueitemmodel.h"
 #include "localplayer.h"
-
-// Suppress noisy Qt warnings that aren't actionable
-static void messageFilter(QtMsgType type, const QMessageLogContext &/*ctx*/, const QString &msg)
-{
-    if (msg.contains(QStringLiteral("Could not register app ID")))
-        return;
-    if (msg.contains(QStringLiteral("Using Qt multimedia with FFmpeg")))
-        return;
-    // Qt internal cleanup on shutdown — not actionable
-    if (msg.contains(QStringLiteral("Timers can only be used with threads started with QThread")))
-        return;
-    if (msg.contains(QStringLiteral("Cannot create children for a parent that is in a different thread")))
-        return;
-
-    // Default handler for everything else
-    switch (type) {
-    case QtDebugMsg: fprintf(stderr, "[DBG] %s\n", qPrintable(msg)); break;
-    case QtInfoMsg: fprintf(stderr, "[INF] %s\n", qPrintable(msg)); break;
-    case QtWarningMsg: fprintf(stderr, "[WRN] %s\n", qPrintable(msg)); break;
-    case QtCriticalMsg: fprintf(stderr, "[ERR] %s\n", qPrintable(msg)); break;
-    case QtFatalMsg: fprintf(stderr, "[FATAL] %s\n", qPrintable(msg)); abort();
-    }
-    fflush(stderr);
-}
+#include "sendspinclient.h"
 
 int main(int argc, char *argv[])
 {
-    qInstallMessageHandler(messageFilter);
-
     QApplication app(argc, argv);
 
     if (qEnvironmentVariableIsEmpty("QT_QUICK_CONTROLS_STYLE")) {
@@ -75,12 +50,22 @@ int main(int argc, char *argv[])
     auto *libraryController = new LibraryController(&app);
     auto *playerModel = new PlayerModel(&app);
     auto *localPlayer = new LocalPlayer(&app);
+    auto *sendspinClient = new SendspinClient(&app);
 
     // Wire up
     playerController->setClient(client);
     queueController->setClient(client);
     libraryController->setClient(client);
     playerModel->setClient(client);
+
+    // Auto-connect Sendspin when MA auth succeeds
+    QObject::connect(client, &MaClient::authenticatedChanged, [client, sendspinClient]() {
+        if (client->isAuthenticated()) {
+            sendspinClient->connectToServer(client->serverUrl(), client->token());
+        } else {
+            sendspinClient->disconnect();
+        }
+    });
 
     // When player changes, update queue
     QObject::connect(playerController, &PlayerController::currentPlayerIdChanged, [&]() {
@@ -97,6 +82,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty(QStringLiteral("LibraryController"), libraryController);
     engine.rootContext()->setContextProperty(QStringLiteral("PlayerModel"), playerModel);
     engine.rootContext()->setContextProperty(QStringLiteral("LocalPlayer"), localPlayer);
+    engine.rootContext()->setContextProperty(QStringLiteral("SendspinClient"), sendspinClient);
 
     // Connect to warnings before loading
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed,

@@ -8,6 +8,7 @@ add_executable(musicassistant-native
     playermodel.cpp
     queueitemmodel.cpp
     localplayer.cpp
+    sendspinclient.cpp
 )
 
 qt_add_qml_module(musicassistant-native

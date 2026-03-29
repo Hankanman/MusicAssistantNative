@@ -15,10 +15,26 @@ Kirigami.ScrollablePage {
         }
     ]
 
-    header: Kirigami.InlineMessage {
-        visible: PlayerController.currentPlayerId !== ""
-        type: Kirigami.MessageType.Information
-        text: i18n("Active player: %1", PlayerController.playerName || PlayerController.currentPlayerId)
+    header: ColumnLayout {
+        spacing: 0
+        Kirigami.InlineMessage {
+            Layout.fillWidth: true
+            visible: PlayerController.currentPlayerId !== ""
+            type: Kirigami.MessageType.Information
+            text: i18n("Active player: %1", PlayerController.playerName || PlayerController.currentPlayerId)
+        }
+        Kirigami.InlineMessage {
+            Layout.fillWidth: true
+            visible: SendspinClient.registered
+            type: Kirigami.MessageType.Positive
+            text: i18n("This device registered as: %1 (select it above to play through PC speakers)", SendspinClient.playerName)
+        }
+        Kirigami.InlineMessage {
+            Layout.fillWidth: true
+            visible: MaClient.authenticated && !SendspinClient.registered
+            type: Kirigami.MessageType.Warning
+            text: i18n("Registering this device as a player...")
+        }
     }
 
     ListView {
