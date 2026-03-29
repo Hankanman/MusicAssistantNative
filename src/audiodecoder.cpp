@@ -1,9 +1,22 @@
 #include "audiodecoder.h"
 #include <QDebug>
+#include <QDir>
+#include <QStandardPaths>
 
 AudioDecoder::AudioDecoder(QObject *parent)
     : QObject(parent)
+    , m_player(new QMediaPlayer(this))
+    , m_audioOutput(new QAudioOutput(this))
 {
+    m_player->setAudioOutput(m_audioOutput);
+    m_audioOutput->setVolume(0.8f);
+
+    connect(m_player, &QMediaPlayer::mediaStatusChanged,
+            this, &AudioDecoder::onMediaStatusChanged);
+    connect(m_player, &QMediaPlayer::errorOccurred, this,
+            [](QMediaPlayer::Error err, const QString &msg) {
+                qDebug() << "AudioDecoder: player error:" << err << msg;
+            });
 }
 
 AudioDecoder::~AudioDecoder()
@@ -13,88 +26,44 @@ AudioDecoder::~AudioDecoder()
 
 void AudioDecoder::start(const QString &codec, int sampleRate, int channels, int bitDepth)
 {
+    Q_UNUSED(channels)
+    Q_UNUSED(bitDepth)
     stop();
 
-    qDebug() << "AudioDecoder: starting - codec:" << codec
-             << "rate:" << sampleRate << "ch:" << channels << "bits:" << bitDepth;
+    m_codec = codec;
+    m_sampleRate = sampleRate;
+    m_bytesWritten = 0;
+    m_playbackStarted = false;
 
-    // Set up audio output format
-    QAudioFormat format;
-    format.setSampleRate(sampleRate);
-    format.setChannelCount(channels);
-    format.setSampleFormat(bitDepth == 24 ? QAudioFormat::Int32 : QAudioFormat::Int16);
+    // Create temp file for the audio stream
+    QString suffix = codec == QStringLiteral("flac") ? QStringLiteral(".flac")
+                   : codec == QStringLiteral("opus") ? QStringLiteral(".opus")
+                   : QStringLiteral(".raw");
 
-    auto device = QMediaDevices::defaultAudioOutput();
-    if (!device.isFormatSupported(format)) {
-        qDebug() << "AudioDecoder: format not supported by device, trying default";
-        format = device.preferredFormat();
-    }
-
-    m_audioSink = new QAudioSink(device, format, this);
-    m_audioSink->setVolume(m_volume);
-    // Small buffer to minimize latency — just enough for smooth playback
-    m_audioSink->setBufferSize(sampleRate * channels * (bitDepth / 8) / 5); // ~200ms buffer
-
-    // Start ffmpeg to decode FLAC stream to raw PCM
-    m_decoder = new QProcess(this);
-    connect(m_decoder, &QProcess::readyReadStandardOutput, this, &AudioDecoder::onDecoderReadyRead);
-    connect(m_decoder, qOverload<int, QProcess::ExitStatus>(&QProcess::finished),
-            this, &AudioDecoder::onDecoderFinished);
-
-    // ffmpeg reads FLAC from stdin, outputs raw PCM to stdout
-    QString sampleFmt = bitDepth == 24 ? QStringLiteral("s32le") : QStringLiteral("s16le");
-    QStringList args = {
-        QStringLiteral("-hide_banner"),
-        QStringLiteral("-loglevel"), QStringLiteral("error"),
-        QStringLiteral("-f"), codec,           // input format (flac)
-        QStringLiteral("-i"), QStringLiteral("pipe:0"),  // read from stdin
-        QStringLiteral("-f"), sampleFmt,       // output raw PCM
-        QStringLiteral("-ar"), QString::number(sampleRate),
-        QStringLiteral("-ac"), QString::number(channels),
-        QStringLiteral("pipe:1")               // write to stdout
-    };
-
-    qDebug() << "AudioDecoder: launching ffmpeg" << args;
-    m_decoder->start(QStringLiteral("ffmpeg"), args);
-    if (!m_decoder->waitForStarted(3000)) {
-        qDebug() << "AudioDecoder: ERROR - ffmpeg failed to start:" << m_decoder->errorString();
-        delete m_decoder;
-        m_decoder = nullptr;
-        return;
-    }
-
-    // Start audio output
-    m_audioDevice = m_audioSink->start();
-    if (!m_audioDevice) {
-        qDebug() << "AudioDecoder: ERROR - audio sink failed to start";
-        m_decoder->kill();
-        delete m_decoder;
-        m_decoder = nullptr;
+    m_tempFile = new QTemporaryFile(QDir::tempPath() + QStringLiteral("/ma_audio_XXXXXX") + suffix, this);
+    m_tempFile->setAutoRemove(true);
+    if (!m_tempFile->open()) {
+        qDebug() << "AudioDecoder: ERROR - failed to create temp file:" << m_tempFile->errorString();
+        delete m_tempFile;
+        m_tempFile = nullptr;
         return;
     }
 
     m_playing = true;
-    Q_EMIT playbackStarted();
-    qDebug() << "AudioDecoder: pipeline started (ffmpeg PID:" << m_decoder->processId() << ")";
+    qDebug() << "AudioDecoder: streaming to" << m_tempFile->fileName();
 }
 
 void AudioDecoder::stop()
 {
-    if (m_decoder) {
-        // Kill immediately — don't wait for buffered data to finish
-        m_decoder->kill();
-        m_decoder->waitForFinished(500);
-        delete m_decoder;
-        m_decoder = nullptr;
+    m_player->stop();
+
+    if (m_tempFile) {
+        m_tempFile->close();
+        delete m_tempFile;
+        m_tempFile = nullptr;
     }
 
-    if (m_audioSink) {
-        m_audioSink->reset(); // flush buffer immediately (stop() would drain it)
-        delete m_audioSink;
-        m_audioSink = nullptr;
-    }
-
-    m_audioDevice = nullptr;
+    m_playbackStarted = false;
 
     if (m_playing) {
         m_playing = false;
@@ -102,18 +71,34 @@ void AudioDecoder::stop()
     }
 }
 
-void AudioDecoder::feedData(const QByteArray &flacData)
+void AudioDecoder::feedData(const QByteArray &encodedData)
 {
-    if (m_decoder && m_decoder->state() == QProcess::Running) {
-        m_decoder->write(flacData);
+    if (!m_tempFile || !m_tempFile->isOpen()) return;
+
+    m_tempFile->write(encodedData);
+    m_tempFile->flush();
+    m_bytesWritten += encodedData.size();
+
+    // Start playback after accumulating ~100KB of data (enough for smooth start)
+    if (!m_playbackStarted && m_bytesWritten > 100000) {
+        startPlaybackIfReady();
     }
+}
+
+void AudioDecoder::startPlaybackIfReady()
+{
+    if (m_playbackStarted || !m_tempFile) return;
+    m_playbackStarted = true;
+
+    qDebug() << "AudioDecoder: starting playback with" << m_bytesWritten << "bytes buffered";
+    m_player->setSource(QUrl::fromLocalFile(m_tempFile->fileName()));
+    m_player->play();
+    Q_EMIT playbackStarted();
 }
 
 void AudioDecoder::setVolume(float vol)
 {
-    m_volume = vol;
-    if (m_audioSink)
-        m_audioSink->setVolume(vol);
+    m_audioOutput->setVolume(vol);
 }
 
 bool AudioDecoder::isPlaying() const
@@ -121,24 +106,11 @@ bool AudioDecoder::isPlaying() const
     return m_playing;
 }
 
-void AudioDecoder::onDecoderReadyRead()
+void AudioDecoder::onMediaStatusChanged(QMediaPlayer::MediaStatus status)
 {
-    if (!m_audioDevice || !m_decoder) return;
-
-    QByteArray pcmData = m_decoder->readAllStandardOutput();
-    if (!pcmData.isEmpty()) {
-        m_audioDevice->write(pcmData);
+    if (status == QMediaPlayer::EndOfMedia) {
+        qDebug() << "AudioDecoder: end of media";
+    } else if (status == QMediaPlayer::InvalidMedia) {
+        qDebug() << "AudioDecoder: invalid media - codec:" << m_codec;
     }
-}
-
-void AudioDecoder::onDecoderFinished(int exitCode, QProcess::ExitStatus status)
-{
-    Q_UNUSED(status)
-    // Flush any remaining data
-    if (m_audioDevice && m_decoder) {
-        QByteArray remaining = m_decoder->readAllStandardOutput();
-        if (!remaining.isEmpty())
-            m_audioDevice->write(remaining);
-    }
-    qDebug() << "AudioDecoder: ffmpeg exited with code" << exitCode;
 }

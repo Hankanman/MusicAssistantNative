@@ -1,12 +1,10 @@
 #pragma once
 
 #include <QObject>
-#include <QProcess>
-#include <QAudioSink>
-#include <QAudioFormat>
-#include <QMediaDevices>
+#include <QMediaPlayer>
+#include <QAudioOutput>
+#include <QTemporaryFile>
 #include <QBuffer>
-#include <QIODevice>
 
 class AudioDecoder : public QObject
 {
@@ -18,9 +16,8 @@ public:
 
     void start(const QString &codec, int sampleRate, int channels, int bitDepth);
     void stop();
-    void feedData(const QByteArray &flacData);
+    void feedData(const QByteArray &encodedData);
     void setVolume(float vol);
-
     bool isPlaying() const;
 
 Q_SIGNALS:
@@ -28,13 +25,17 @@ Q_SIGNALS:
     void playbackStopped();
 
 private Q_SLOTS:
-    void onDecoderReadyRead();
-    void onDecoderFinished(int exitCode, QProcess::ExitStatus status);
+    void onMediaStatusChanged(QMediaPlayer::MediaStatus status);
 
 private:
-    QProcess *m_decoder = nullptr;
-    QAudioSink *m_audioSink = nullptr;
-    QIODevice *m_audioDevice = nullptr;
-    float m_volume = 0.8f;
+    void startPlaybackIfReady();
+
+    QMediaPlayer *m_player;
+    QAudioOutput *m_audioOutput;
+    QTemporaryFile *m_tempFile = nullptr;
+    QString m_codec;
+    int m_sampleRate = 44100;
     bool m_playing = false;
+    bool m_playbackStarted = false;
+    int m_bytesWritten = 0;
 };
