@@ -2,11 +2,19 @@
 #include "maclient.h"
 #include <QNetworkReply>
 #include <QQuickTextureFactory>
+#include <QUrl>
 
 MaImageResponse::MaImageResponse(const QString &imageUrl, const QSize &requestedSize,
-                                 const QString &authToken)
+                                 const QString &authToken, const QString &directUrl)
     : m_requestedSize(requestedSize)
+    , m_directUrl(directUrl)
 {
+    if (imageUrl.isEmpty()) {
+        m_error = QStringLiteral("Empty URL");
+        QMetaObject::invokeMethod(this, &MaImageResponse::finished, Qt::QueuedConnection);
+        return;
+    }
+
     QNetworkRequest req;
     req.setUrl(QUrl(imageUrl));
     if (!authToken.isEmpty()) {
@@ -39,6 +47,16 @@ void MaImageResponse::onFinished()
     reply->deleteLater();
 
     if (reply->error() != QNetworkReply::NoError) {
+        // If proxy failed and we have a direct URL, try that instead
+        if (!m_directUrl.isEmpty()) {
+            QString fallback = m_directUrl;
+            m_directUrl.clear(); // prevent infinite loop
+            QNetworkRequest req;
+            req.setUrl(QUrl(fallback));
+            auto *retryReply = m_nam.get(req);
+            connect(retryReply, &QNetworkReply::finished, this, &MaImageResponse::onFinished);
+            return;
+        }
         m_error = reply->errorString();
         Q_EMIT finished();
         return;
@@ -48,6 +66,16 @@ void MaImageResponse::onFinished()
     m_image = QImage::fromData(data);
 
     if (m_image.isNull()) {
+        // Maybe proxy returned an error page, try direct URL
+        if (!m_directUrl.isEmpty()) {
+            QString fallback = m_directUrl;
+            m_directUrl.clear();
+            QNetworkRequest req;
+            req.setUrl(QUrl(fallback));
+            auto *retryReply = m_nam.get(req);
+            connect(retryReply, &QNetworkReply::finished, this, &MaImageResponse::onFinished);
+            return;
+        }
         m_error = QStringLiteral("Failed to decode image");
         Q_EMIT finished();
         return;
@@ -67,26 +95,23 @@ MaImageProvider::MaImageProvider(MaClient *client)
 
 QQuickImageResponse *MaImageProvider::requestImageResponse(const QString &id, const QSize &requestedSize)
 {
-    // id comes URL-decoded from QML Image element, but may still have %7C for |
     QString decoded = QUrl::fromPercentEncoding(id.toUtf8());
-    // Format: "path|provider" from MediaItemModel::extractImageUrl
     auto parts = decoded.split(QLatin1Char('|'));
     QString path = parts.value(0);
     QString provider = parts.value(1);
-    QString url;
 
-    if (path.startsWith(QStringLiteral("http://")) || path.startsWith(QStringLiteral("https://"))) {
-        // Remotely accessible image — use proxy for resizing/caching
-        int size = requestedSize.isValid() ? qMax(requestedSize.width(), requestedSize.height()) : 300;
-        url = m_client->getImageUrl(path, provider, size);
-    } else if (!path.isEmpty()) {
-        // Local/provider path — must go through proxy
-        int size = requestedSize.isValid() ? qMax(requestedSize.width(), requestedSize.height()) : 300;
-        url = m_client->getImageUrl(path, provider, size);
-    } else {
-        // Empty — return empty response
-        return new MaImageResponse(QString(), requestedSize, QString());
+    if (path.isEmpty()) {
+        return new MaImageResponse(QString(), requestedSize);
     }
 
-    return new MaImageResponse(url, requestedSize, m_client->token());
+    int size = requestedSize.isValid() ? qMax(requestedSize.width(), requestedSize.height()) : 300;
+    QString proxyUrl = m_client->getImageUrl(path, provider, size);
+
+    // If path is a remote URL, pass it as fallback in case proxy 404s
+    QString directUrl;
+    if (path.startsWith(QStringLiteral("http://")) || path.startsWith(QStringLiteral("https://"))) {
+        directUrl = path;
+    }
+
+    return new MaImageResponse(proxyUrl, requestedSize, m_client->token(), directUrl);
 }

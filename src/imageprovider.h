@@ -11,7 +11,7 @@ class MaImageResponse : public QQuickImageResponse
 
 public:
     MaImageResponse(const QString &url, const QSize &requestedSize,
-                    const QString &authToken = {});
+                    const QString &authToken = {}, const QString &directUrl = {});
 
     QQuickTextureFactory *textureFactory() const override;
     QString errorString() const override;
@@ -24,6 +24,7 @@ private:
     QImage m_image;
     QString m_error;
     QSize m_requestedSize;
+    QString m_directUrl;  // fallback URL if proxy fails
 };
 
 class MaImageProvider : public QQuickAsyncImageProvider
