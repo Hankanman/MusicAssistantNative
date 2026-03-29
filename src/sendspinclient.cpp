@@ -206,20 +206,21 @@ void SendspinClient::onTextMessageReceived(const QString &message)
 
 void SendspinClient::onBinaryMessageReceived(const QByteArray &data)
 {
+    m_binFrameCount++;
+    if (m_binFrameCount <= 3 || m_binFrameCount % 100 == 0) {
+        qDebug() << "SendspinClient: BIN frame #" << m_binFrameCount
+                 << "size:" << data.size() << "bytes";
+    }
+
     // Binary frames: byte 0 = role+slot, bytes 1-8 = timestamp, bytes 9+ = audio
     if (data.size() < 9) return;
 
-    // For now, just track that we're receiving audio
     if (!m_playing) {
         m_playing = true;
         Q_EMIT playingChanged();
-        qDebug() << "SendspinClient: receiving audio data, codec:" << m_currentCodec;
     }
 
-    // TODO: Decode and play audio frames
-    // The audio data is encoded in the negotiated codec (opus/flac)
-    // Bytes 1-8 are the server timestamp for sync
-    // Bytes 9+ are the encoded audio payload
+    // TODO: Decode FLAC audio from bytes 9+ and feed to QAudioSink
 }
 
 void SendspinClient::onWsError(QAbstractSocket::SocketError error)
@@ -368,9 +369,14 @@ void SendspinClient::handleStreamStart(const QJsonObject &payload)
     qDebug() << "SendspinClient: stream starting - codec:" << m_currentCodec
              << "rate:" << m_sampleRate << "ch:" << m_channels;
 
+    m_binFrameCount = 0;
     m_playing = true;
     Q_EMIT playingChanged();
+
+    // Immediately confirm we're ready to receive audio
     sendState();
+
+    qDebug() << "SendspinClient: confirmed synchronized state for stream";
 }
 
 void SendspinClient::handleStreamEnd()

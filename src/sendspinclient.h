@@ -76,6 +76,7 @@ private:
     QString m_lastServerUrl;
 
     // Audio playback
+    int m_binFrameCount = 0;
     QAudioOutput *m_audioOutput;
     QString m_currentCodec;
     int m_sampleRate = 48000;
