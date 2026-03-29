@@ -62,7 +62,7 @@ Kirigami.ScrollablePage {
                             "queueId:", QueueController.currentQueueId,
                             "playerId:", PlayerController.currentPlayerId)
                 if (uri !== "") {
-                    QueueController.playMedia(uri, "play")
+                    QueueController.playMedia(uri, "replace")
                 }
             }
         }

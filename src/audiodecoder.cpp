@@ -32,7 +32,8 @@ void AudioDecoder::start(const QString &codec, int sampleRate, int channels, int
 
     m_audioSink = new QAudioSink(device, format, this);
     m_audioSink->setVolume(m_volume);
-    m_audioSink->setBufferSize(sampleRate * channels * (bitDepth / 8) * 2); // 2 seconds buffer
+    // Small buffer to minimize latency — just enough for smooth playback
+    m_audioSink->setBufferSize(sampleRate * channels * (bitDepth / 8) / 5); // ~200ms buffer
 
     // Start ffmpeg to decode FLAC stream to raw PCM
     m_decoder = new QProcess(this);
