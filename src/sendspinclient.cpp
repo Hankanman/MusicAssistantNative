@@ -123,7 +123,8 @@ void SendspinClient::onConnected()
 
 void SendspinClient::onDisconnected()
 {
-    qDebug() << "SendspinClient: disconnected";
+    qDebug() << "SendspinClient: disconnected - close code:" << m_socket.closeCode()
+             << "reason:" << m_socket.closeReason();
     m_stateTimer.stop();
     m_timeTimer.stop();
     m_authenticated = false;
@@ -146,7 +147,8 @@ void SendspinClient::onTextMessageReceived(const QString &message)
     QString type = msg.value(QStringLiteral("type")).toString();
     QJsonObject payload = msg.value(QStringLiteral("payload")).toObject();
 
-    qDebug() << "SendspinClient: received" << type;
+    qDebug() << "SendspinClient: received" << type
+             << "payload keys:" << payload.keys();
 
     if (type == QStringLiteral("auth_ok")) {
         qDebug() << "SendspinClient: auth OK, sending hello...";
@@ -172,6 +174,15 @@ void SendspinClient::onTextMessageReceived(const QString &message)
         handleStreamClear();
     } else if (type == QStringLiteral("server/time")) {
         handleTimeResponse(payload);
+    } else if (type == QStringLiteral("server/goodbye")) {
+        qDebug() << "SendspinClient: server said goodbye -"
+                 << payload.value(QStringLiteral("reason")).toString();
+    } else if (type == QStringLiteral("error")) {
+        qDebug() << "SendspinClient: ERROR from server:"
+                 << QJsonDocument(payload).toJson(QJsonDocument::Compact);
+    } else {
+        qDebug() << "SendspinClient: UNHANDLED message type:" << type
+                 << "full:" << QJsonDocument(msg).toJson(QJsonDocument::Compact).left(500);
     }
 }
 
