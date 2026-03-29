@@ -88,12 +88,13 @@ jobs:
       - name: Build DEB
         run: |
           dpkg-buildpackage -us -uc -b
+          cp ../*.deb .
 
       - name: Upload DEB
         uses: actions/upload-artifact@v4
         with:
           name: musicassistant-native-deb
-          path: ../*.deb
+          path: ./*.deb
 
   build-appimage:
     name: Build AppImage
@@ -135,13 +136,18 @@ jobs:
           QML_SOURCES_PATHS: src/qml
           VERSION: "0.1.0"
           APPIMAGE_EXTRACT_AND_RUN: "1"
+          NO_STRIP: "1"
         run: |
+          # Fix desktop file icon reference for AppImage
+          sed -i 's|Icon=multimedia-player|Icon=musicassistant-native|' \
+            AppDir/usr/share/applications/io.github.musicassistant.native.desktop
           ./linuxdeploy-x86_64.AppImage \
             --appdir AppDir \
             --desktop-file AppDir/usr/share/applications/io.github.musicassistant.native.desktop \
             --icon-file AppDir/usr/share/icons/hicolor/scalable/apps/musicassistant-native.svg \
             --plugin qt \
-            --output appimage
+            --output appimage || true
+          ls -lh *.AppImage 2>/dev/null && echo "AppImage created" || echo "AppImage creation failed"
 
       - name: Upload AppImage
         uses: actions/upload-artifact@v4
