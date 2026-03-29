@@ -13,6 +13,7 @@ Kirigami.ApplicationWindow {
     height: Kirigami.Units.gridUnit * 35
 
     property bool isConnected: MaClient.authenticated
+    property bool showPlayerBar: root.isConnected && PlayerController.currentPlayerId !== ""
 
     globalDrawer: Kirigami.GlobalDrawer {
         title: i18n("Music Assistant")
@@ -21,6 +22,9 @@ Kirigami.ApplicationWindow {
         modal: Kirigami.Settings.isMobile
         collapsible: true
         collapsed: false
+
+        // Reserve space at bottom for the player bar
+        bottomPadding: root.showPlayerBar ? playerBar.height : 0
 
         actions: [
             Kirigami.Action {
@@ -73,16 +77,18 @@ Kirigami.ApplicationWindow {
         }
     }
 
-    // Add bottom margin to pageStack so content doesn't go behind player bar
     pageStack.initialPage: "qrc:/io/github/musicassistant/native/qml/SettingsPage.qml"
 
-    // Persistent bottom player bar — positioned at window level, spans full width
+    // Give pageStack bottom margin so content isn't hidden behind player bar
+    pageStack.anchors.bottomMargin: root.showPlayerBar ? playerBar.height : 0
+
+    // Persistent bottom player bar — anchored to window contentItem (below sidebar)
     QQC2.ToolBar {
         id: playerBar
-        visible: root.isConnected && PlayerController.currentPlayerId !== ""
-        z: 999
+        visible: root.showPlayerBar
+        z: 1
 
-        parent: root.overlay
+        parent: root.contentItem
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
