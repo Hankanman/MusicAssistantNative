@@ -66,6 +66,7 @@ Kirigami.Page {
                 delegate: MediaItemDelegate {
                     width: ListView.view.width
                     onItemActivated: (uri) => { if (uri) QueueController.playMedia(uri, "replace") }
+                    onDetailRequested: (data) => libraryPage.openDetailPage(data)
                 }
                 Kirigami.PlaceholderMessage {
                     anchors.centerIn: parent
@@ -86,6 +87,7 @@ Kirigami.Page {
                 delegate: MediaItemDelegate {
                     width: ListView.view.width
                     onItemActivated: (uri) => { if (uri) QueueController.playMedia(uri, "replace") }
+                    onDetailRequested: (data) => libraryPage.openDetailPage(data)
                 }
                 Kirigami.PlaceholderMessage {
                     anchors.centerIn: parent
@@ -100,6 +102,7 @@ Kirigami.Page {
                 delegate: MediaItemDelegate {
                     width: ListView.view.width
                     onItemActivated: (uri) => { if (uri) QueueController.playMedia(uri, "replace") }
+                    onDetailRequested: (data) => libraryPage.openDetailPage(data)
                 }
                 Kirigami.PlaceholderMessage {
                     anchors.centerIn: parent
@@ -114,6 +117,7 @@ Kirigami.Page {
                 delegate: MediaItemDelegate {
                     width: ListView.view.width
                     onItemActivated: (uri) => { if (uri) QueueController.playMedia(uri, "replace") }
+                    onDetailRequested: (data) => libraryPage.openDetailPage(data)
                 }
                 Kirigami.PlaceholderMessage {
                     anchors.centerIn: parent
@@ -122,12 +126,27 @@ Kirigami.Page {
                 }
             }
 
-            // Tab 5: Search results
+            // Tab 5: Search results with section headers
             ListView {
                 model: LibraryController.searchResultsModel
+                section.property: "mediaType"
+                section.delegate: Kirigami.ListSectionHeader {
+                    width: ListView.view.width
+                    text: {
+                        switch (section) {
+                        case "artist": return i18n("Artists")
+                        case "album": return i18n("Albums")
+                        case "track": return i18n("Tracks")
+                        case "playlist": return i18n("Playlists")
+                        case "radio": return i18n("Radios")
+                        default: return section
+                        }
+                    }
+                }
                 delegate: MediaItemDelegate {
                     width: ListView.view.width
                     onItemActivated: (uri) => { if (uri) QueueController.playMedia(uri, "replace") }
+                    onDetailRequested: (data) => libraryPage.openDetailPage(data)
                 }
                 Kirigami.PlaceholderMessage {
                     anchors.centerIn: parent
@@ -190,6 +209,7 @@ Kirigami.Page {
             delegate: MediaItemDelegate {
                 width: ListView.view.width
                 onItemActivated: (uri) => { if (uri) QueueController.playMedia(uri, "replace") }
+                onDetailRequested: (data) => libraryPage.openDetailPage(data)
             }
             Kirigami.PlaceholderMessage {
                 anchors.centerIn: parent
@@ -214,7 +234,18 @@ Kirigami.Page {
                 imageUrl: model.imageUrl || ""
                 uri: model.uri || ""
                 year: model.year || 0
-                onItemActivated: (uri) => { if (uri) QueueController.playMedia(uri, "replace") }
+                onItemActivated: {
+                    libraryPage.openDetailPage({
+                        mediaType: "album",
+                        name: model.name || "",
+                        artistName: model.artistName || "",
+                        imageUrl: model.imageUrl || "",
+                        uri: model.uri || "",
+                        itemId: model.itemId || "",
+                        provider: model.provider || "",
+                        year: model.year || 0
+                    })
+                }
                 onPlayRequested: (uri) => { if (uri) QueueController.playMedia(uri, "replace") }
             }
             Kirigami.PlaceholderMessage {
@@ -222,6 +253,44 @@ Kirigami.Page {
                 visible: albumGrid.count === 0 && !LibraryController.loading
                 text: i18n("No albums"); icon.name: "media-album-cover"
             }
+        }
+    }
+
+    function openDetailPage(data) {
+        var pageStack = applicationWindow().pageStack
+        switch (data.mediaType) {
+        case "artist":
+            pageStack.push(Qt.resolvedUrl("ArtistDetailPage.qml"), {
+                artistName: data.name,
+                imageUrl: data.imageUrl,
+                itemId: data.itemId,
+                provider: data.provider
+            })
+            break
+        case "album":
+            pageStack.push(Qt.resolvedUrl("AlbumDetailPage.qml"), {
+                albumName: data.name,
+                artistName: data.artistName,
+                imageUrl: data.imageUrl,
+                year: data.year || 0,
+                itemId: data.itemId,
+                provider: data.provider,
+                uri: data.uri
+            })
+            break
+        case "playlist":
+            pageStack.push(Qt.resolvedUrl("PlaylistDetailPage.qml"), {
+                playlistName: data.name,
+                imageUrl: data.imageUrl,
+                itemId: data.itemId,
+                provider: data.provider,
+                uri: data.uri
+            })
+            break
+        default:
+            // Tracks and radios just play
+            if (data.uri) QueueController.playMedia(data.uri, "replace")
+            break
         }
     }
 

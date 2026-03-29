@@ -44,6 +44,7 @@ public:
     Q_INVOKABLE void search(const QString &query);
     Q_INVOKABLE void loadAlbumTracks(const QString &itemId, const QString &provider);
     Q_INVOKABLE void loadArtistAlbums(const QString &itemId, const QString &provider);
+    Q_INVOKABLE void loadPlaylistTracks(const QString &itemId, const QString &provider);
     Q_INVOKABLE void addToFavorites(const QString &uri);
     Q_INVOKABLE void removeFromFavorites(const QString &mediaType, const QString &itemId);
 
@@ -52,6 +53,7 @@ Q_SIGNALS:
     void loadingChanged();
     void albumTracksLoaded(const QJsonArray &tracks);
     void artistAlbumsLoaded(const QJsonArray &albums);
+    void playlistTracksLoaded(const QJsonArray &tracks);
 
 private:
     void setLoading(bool loading);

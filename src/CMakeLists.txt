@@ -9,6 +9,7 @@ add_executable(musicassistant-native
     queueitemmodel.cpp
     sendspinclient.cpp
     audiodecoder.cpp
+    mpris2player.cpp
 )
 
 qt_add_qml_module(musicassistant-native
@@ -24,6 +25,9 @@ qt_add_qml_module(musicassistant-native
         qml/MediaItemDelegate.qml
         qml/AboutPage.qml
         qml/AlbumGridDelegate.qml
+        qml/AlbumDetailPage.qml
+        qml/ArtistDetailPage.qml
+        qml/PlaylistDetailPage.qml
 )
 
 target_link_libraries(musicassistant-native PRIVATE
@@ -34,6 +38,7 @@ target_link_libraries(musicassistant-native PRIVATE
     Qt6::Network
     Qt6::WebSockets
     Qt6::Multimedia
+    Qt6::DBus
     KF6::Kirigami
     KF6::I18n
     KF6::CoreAddons

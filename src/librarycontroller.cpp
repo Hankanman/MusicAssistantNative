@@ -140,6 +140,22 @@ void LibraryController::loadArtistAlbums(const QString &itemId, const QString &p
         });
 }
 
+void LibraryController::loadPlaylistTracks(const QString &itemId, const QString &provider)
+{
+    if (!m_client) return;
+
+    QJsonObject args;
+    args[QStringLiteral("item_id")] = itemId;
+    args[QStringLiteral("provider_instance_id_or_domain")] = provider;
+
+    m_client->sendCommand(QStringLiteral("music/playlists/playlist_tracks"), args,
+        [this](const QJsonValue &result, const QString &error) {
+            if (error.isEmpty() && result.isArray()) {
+                Q_EMIT playlistTracksLoaded(result.toArray());
+            }
+        });
+}
+
 void LibraryController::addToFavorites(const QString &uri)
 {
     if (!m_client) return;

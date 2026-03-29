@@ -119,6 +119,14 @@ Kirigami.ApplicationWindow {
         }
     }
 
+    // Keyboard shortcuts
+    Shortcut { sequence: "Space"; onActivated: PlayerController.playPause() }
+    Shortcut { sequence: "N"; onActivated: PlayerController.next() }
+    Shortcut { sequence: "P"; onActivated: PlayerController.previous() }
+    Shortcut { sequence: "M"; onActivated: PlayerController.toggleMute() }
+    Shortcut { sequence: "Ctrl+Up"; onActivated: PlayerController.volumeUp() }
+    Shortcut { sequence: "Ctrl+Down"; onActivated: PlayerController.volumeDown() }
+
     // Give pageStack bottom margin so content isn't hidden behind player bar
     pageStack.anchors.bottomMargin: root.showPlayerBar ? playerBar.height : 0
 
@@ -199,20 +207,66 @@ Kirigami.ApplicationWindow {
                 QQC2.ToolTip.visible: hovered
             }
 
-            // Volume
+            // Volume popup
             QQC2.ToolButton {
-                icon.name: PlayerController.volumeMuted ? "audio-volume-muted" : "audio-volume-high"
-                onClicked: PlayerController.toggleMute()
-                QQC2.ToolTip.text: i18n("Mute")
-                QQC2.ToolTip.visible: hovered
+                id: volumeButton
+                icon.name: PlayerController.volumeMuted ? "audio-volume-muted"
+                         : PlayerController.volumeLevel > 66 ? "audio-volume-high"
+                         : PlayerController.volumeLevel > 33 ? "audio-volume-medium"
+                         : "audio-volume-low"
+                onClicked: volumePopup.open()
+                QQC2.ToolTip.text: i18n("Volume: %1%", PlayerController.volumeLevel)
+                QQC2.ToolTip.visible: hovered && !volumePopup.visible
+
+                QQC2.Popup {
+                    id: volumePopup
+                    y: -height - Kirigami.Units.smallSpacing
+                    x: (parent.width - width) / 2
+                    width: Kirigami.Units.gridUnit * 3
+                    height: Kirigami.Units.gridUnit * 12
+                    padding: Kirigami.Units.smallSpacing
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        spacing: Kirigami.Units.smallSpacing
+
+                        QQC2.Label {
+                            text: PlayerController.volumeLevel + "%"
+                            font.pointSize: Kirigami.Theme.smallFont.pointSize
+                            Layout.alignment: Qt.AlignHCenter
+                        }
+
+                        QQC2.Slider {
+                            Layout.fillHeight: true
+                            Layout.alignment: Qt.AlignHCenter
+                            orientation: Qt.Vertical
+                            from: 0
+                            to: 100
+                            value: PlayerController.volumeLevel
+                            onMoved: PlayerController.setVolume(Math.round(value))
+                        }
+
+                        QQC2.ToolButton {
+                            icon.name: PlayerController.volumeMuted ? "audio-volume-muted" : "audio-volume-high"
+                            Layout.alignment: Qt.AlignHCenter
+                            onClicked: PlayerController.toggleMute()
+                        }
+                    }
+                }
             }
-            QQC2.Slider {
-                Layout.preferredWidth: Kirigami.Units.gridUnit * 6
-                from: 0
-                to: 100
-                value: PlayerController.volumeLevel
-                onMoved: PlayerController.setVolume(Math.round(value))
-            }
+        }
+
+        // Thin progress bar at top of player bar
+        QQC2.ProgressBar {
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: 2
+            from: 0
+            to: PlayerController.duration > 0 ? PlayerController.duration : 1
+            value: PlayerController.elapsed
+            visible: PlayerController.duration > 0
+            background: Rectangle { color: "transparent" }
         }
     }
 }

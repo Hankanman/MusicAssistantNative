@@ -30,6 +30,7 @@ find_package(Qt6 ${QT_MIN_VERSION} REQUIRED COMPONENTS
     Network
     WebSockets
     Multimedia
+    DBus
     Qml
 )
 

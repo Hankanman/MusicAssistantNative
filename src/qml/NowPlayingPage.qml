@@ -1,50 +1,101 @@
 import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts
+import QtQuick.Effects
 import org.kde.kirigami as Kirigami
 
 Kirigami.Page {
     id: nowPlayingPage
     title: i18n("Now Playing")
+    padding: 0
+
+    // Blurred background album art
+    Image {
+        id: bgImage
+        anchors.fill: parent
+        source: PlayerController.currentTrackImageUrl || ""
+        fillMode: Image.PreserveAspectCrop
+        visible: false
+        asynchronous: true
+    }
+
+    MultiEffect {
+        source: bgImage
+        anchors.fill: parent
+        blurEnabled: true
+        blurMax: 64
+        blur: 1.0
+        opacity: bgImage.status === Image.Ready ? 0.3 : 0
+
+        Behavior on opacity { NumberAnimation { duration: 500 } }
+    }
+
+    // Dark overlay for readability
+    Rectangle {
+        anchors.fill: parent
+        color: Kirigami.Theme.backgroundColor
+        opacity: 0.7
+    }
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: Kirigami.Units.largeSpacing
+        anchors.margins: Kirigami.Units.largeSpacing * 2
         spacing: Kirigami.Units.largeSpacing
 
-        // Album art
+        Item { Layout.fillHeight: true; Layout.maximumHeight: Kirigami.Units.gridUnit * 2 }
+
+        // Album art with rounded corners and shadow
         Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            Layout.preferredHeight: parent.height * 0.5
+            Layout.maximumHeight: Kirigami.Units.gridUnit * 22
+            Layout.maximumWidth: Kirigami.Units.gridUnit * 22
+            Layout.alignment: Qt.AlignHCenter
 
-            Image {
-                id: albumArt
+            // Shadow
+            Rectangle {
+                anchors.fill: albumArtContainer
+                anchors.margins: -2
+                radius: Kirigami.Units.cornerRadius + 2
+                color: "transparent"
+                border.color: Qt.rgba(0, 0, 0, 0.2)
+                border.width: 2
+            }
+
+            Rectangle {
+                id: albumArtContainer
                 anchors.centerIn: parent
                 width: Math.min(parent.width, parent.height)
                 height: width
-                source: PlayerController.currentTrackImageUrl !== ""
-                    ? PlayerController.currentTrackImageUrl
-                    : ""
-                fillMode: Image.PreserveAspectCrop
-                visible: source !== ""
+                radius: Kirigami.Units.cornerRadius
+                color: Kirigami.Theme.backgroundColor
+                clip: true
 
-                Rectangle {
+                Image {
+                    id: albumArt
                     anchors.fill: parent
-                    color: "transparent"
-                    border.color: Kirigami.Theme.disabledTextColor
-                    border.width: 1
-                    radius: 8
-                }
-            }
+                    source: PlayerController.currentTrackImageUrl || ""
+                    fillMode: Image.PreserveAspectCrop
+                    asynchronous: true
+                    visible: status === Image.Ready
 
-            Kirigami.Icon {
-                anchors.centerIn: parent
-                source: "multimedia-player"
-                width: Kirigami.Units.gridUnit * 8
-                height: width
-                visible: albumArt.source === ""
-                color: Kirigami.Theme.disabledTextColor
+                    Behavior on source {
+                        SequentialAnimation {
+                            NumberAnimation { target: albumArt; property: "opacity"; to: 0; duration: 200 }
+                            PropertyAction { target: albumArt; property: "source" }
+                            NumberAnimation { target: albumArt; property: "opacity"; to: 1; duration: 300 }
+                        }
+                    }
+                }
+
+                Kirigami.Icon {
+                    anchors.centerIn: parent
+                    source: "multimedia-player"
+                    width: parent.width * 0.35
+                    height: width
+                    visible: albumArt.status !== Image.Ready
+                    color: Kirigami.Theme.disabledTextColor
+                }
             }
         }
 
@@ -55,17 +106,17 @@ Kirigami.Page {
 
             QQC2.Label {
                 text: PlayerController.currentTrackTitle || i18n("Nothing playing")
-                font.pointSize: Kirigami.Theme.defaultFont.pointSize * 1.5
-                font.bold: true
+                font.pointSize: Kirigami.Theme.defaultFont.pointSize * 1.6
+                font.weight: Font.Bold
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
                 Layout.fillWidth: true
             }
             QQC2.Label {
                 text: PlayerController.currentTrackArtist
-                font.pointSize: Kirigami.Theme.defaultFont.pointSize * 1.1
+                font.pointSize: Kirigami.Theme.defaultFont.pointSize * 1.15
                 horizontalAlignment: Text.AlignHCenter
-                color: Kirigami.Theme.disabledTextColor
+                opacity: 0.7
                 elide: Text.ElideRight
                 Layout.fillWidth: true
                 visible: text !== ""
@@ -74,17 +125,19 @@ Kirigami.Page {
                 text: PlayerController.currentTrackAlbum
                 font.pointSize: Kirigami.Theme.smallFont.pointSize
                 horizontalAlignment: Text.AlignHCenter
-                color: Kirigami.Theme.disabledTextColor
+                opacity: 0.5
                 elide: Text.ElideRight
                 Layout.fillWidth: true
                 visible: text !== ""
             }
         }
 
-        // Progress bar
+        // Seek bar
         ColumnLayout {
             Layout.fillWidth: true
-            spacing: 2
+            Layout.leftMargin: Kirigami.Units.gridUnit
+            Layout.rightMargin: Kirigami.Units.gridUnit
+            spacing: 0
 
             QQC2.Slider {
                 id: seekSlider
@@ -93,7 +146,6 @@ Kirigami.Page {
                 to: PlayerController.duration > 0 ? PlayerController.duration : 1
                 value: PlayerController.elapsed
                 enabled: PlayerController.duration > 0
-
                 onMoved: PlayerController.seek(Math.round(value))
             }
 
@@ -103,21 +155,21 @@ Kirigami.Page {
                 QQC2.Label {
                     text: formatTime(PlayerController.elapsed)
                     font.pointSize: Kirigami.Theme.smallFont.pointSize
-                    color: Kirigami.Theme.disabledTextColor
+                    opacity: 0.6
                 }
                 Item { Layout.fillWidth: true }
                 QQC2.Label {
                     text: formatTime(PlayerController.duration)
                     font.pointSize: Kirigami.Theme.smallFont.pointSize
-                    color: Kirigami.Theme.disabledTextColor
+                    opacity: 0.6
                 }
             }
         }
 
-        // Playback controls
+        // Transport controls
         RowLayout {
             Layout.alignment: Qt.AlignHCenter
-            spacing: Kirigami.Units.largeSpacing
+            spacing: Kirigami.Units.gridUnit
 
             QQC2.ToolButton {
                 icon.name: "media-playlist-shuffle"
@@ -126,24 +178,32 @@ Kirigami.Page {
                 QQC2.ToolTip.text: i18n("Shuffle")
                 QQC2.ToolTip.visible: hovered
             }
+
             QQC2.ToolButton {
                 icon.name: "media-skip-backward"
                 icon.width: Kirigami.Units.iconSizes.medium
                 icon.height: Kirigami.Units.iconSizes.medium
                 onClicked: PlayerController.previous()
             }
-            QQC2.ToolButton {
+
+            // Large play/pause button
+            QQC2.RoundButton {
+                implicitWidth: Kirigami.Units.gridUnit * 4
+                implicitHeight: Kirigami.Units.gridUnit * 4
                 icon.name: PlayerController.isPlaying ? "media-playback-pause" : "media-playback-start"
                 icon.width: Kirigami.Units.iconSizes.large
                 icon.height: Kirigami.Units.iconSizes.large
                 onClicked: PlayerController.playPause()
+                highlighted: true
             }
+
             QQC2.ToolButton {
                 icon.name: "media-skip-forward"
                 icon.width: Kirigami.Units.iconSizes.medium
                 icon.height: Kirigami.Units.iconSizes.medium
                 onClicked: PlayerController.next()
             }
+
             QQC2.ToolButton {
                 icon.name: {
                     switch (QueueController.repeatMode) {
@@ -164,6 +224,8 @@ Kirigami.Page {
                 QQC2.ToolTip.visible: hovered
             }
         }
+
+        Item { Layout.fillHeight: true; Layout.maximumHeight: Kirigami.Units.gridUnit * 2 }
     }
 
     function formatTime(seconds) {

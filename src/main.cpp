@@ -17,6 +17,7 @@
 #include "playermodel.h"
 #include "queueitemmodel.h"
 #include "sendspinclient.h"
+#include "mpris2player.h"
 
 int main(int argc, char *argv[])
 {
@@ -49,6 +50,10 @@ int main(int argc, char *argv[])
     auto *libraryController = new LibraryController(&app);
     auto *playerModel = new PlayerModel(&app);
     auto *sendspinClient = new SendspinClient(&app);
+
+    // MPRIS2 D-Bus integration
+    auto *mpris2 = new Mpris2Player(playerController, &app);
+    Q_UNUSED(mpris2)
 
     // Wire up
     playerController->setClient(client);

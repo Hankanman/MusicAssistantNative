@@ -7,6 +7,7 @@ QQC2.ItemDelegate {
     id: delegate
 
     signal itemActivated(string uri)
+    signal detailRequested(var itemData)
 
     // Parse "path|provider" into a usable image URL
     readonly property var imageParts: model.imageUrl ? model.imageUrl.split("|") : []
@@ -119,9 +120,24 @@ QQC2.ItemDelegate {
     }
 
     onClicked: {
-        var uri = model.uri || ""
-        if (uri !== "") {
-            delegate.itemActivated(uri)
+        var mediaType = model.mediaType || ""
+        if (mediaType === "artist" || mediaType === "album" || mediaType === "playlist") {
+            delegate.detailRequested({
+                mediaType: mediaType,
+                name: model.name || "",
+                artistName: model.artistName || "",
+                albumName: model.albumName || "",
+                imageUrl: model.imageUrl || "",
+                uri: model.uri || "",
+                itemId: model.itemId || "",
+                provider: model.provider || "",
+                year: model.year || 0
+            })
+        } else {
+            var uri = model.uri || ""
+            if (uri !== "") {
+                delegate.itemActivated(uri)
+            }
         }
     }
 
