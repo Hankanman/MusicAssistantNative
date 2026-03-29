@@ -8,16 +8,27 @@ QQC2.ItemDelegate {
 
     signal itemActivated(string uri)
 
+    // Parse "path|provider" into a usable image URL
+    readonly property var imageParts: model.imageUrl ? model.imageUrl.split("|") : []
+    readonly property string resolvedImageUrl: {
+        if (imageParts.length >= 2 && imageParts[0] !== "") {
+            return MaClient.getImageUrl(imageParts[0], imageParts[1], 300)
+        }
+        return ""
+    }
+
     contentItem: RowLayout {
         spacing: Kirigami.Units.smallSpacing
 
         // Thumbnail
         Image {
-            source: model.imageUrl ? "image://ma/" + model.imageUrl : ""
+            source: delegate.resolvedImageUrl
             Layout.preferredWidth: Kirigami.Units.gridUnit * 3
             Layout.preferredHeight: Kirigami.Units.gridUnit * 3
             fillMode: Image.PreserveAspectCrop
-            visible: source !== ""
+            visible: delegate.resolvedImageUrl !== ""
+            asynchronous: true
+            cache: true
 
             Rectangle {
                 anchors.fill: parent
@@ -41,7 +52,7 @@ QQC2.ItemDelegate {
             }
             Layout.preferredWidth: Kirigami.Units.gridUnit * 3
             Layout.preferredHeight: Kirigami.Units.gridUnit * 3
-            visible: !model.imageUrl || model.imageUrl === ""
+            visible: delegate.resolvedImageUrl === ""
             color: Kirigami.Theme.disabledTextColor
         }
 

@@ -16,11 +16,10 @@
 #include "mediaitemmodel.h"
 #include "playermodel.h"
 #include "queueitemmodel.h"
-#include "imageprovider.h"
 #include "localplayer.h"
 
 // Suppress noisy Qt warnings that aren't actionable
-static void messageFilter(QtMsgType type, const QMessageLogContext &ctx, const QString &msg)
+static void messageFilter(QtMsgType type, const QMessageLogContext &/*ctx*/, const QString &msg)
 {
     // Portal registration fails when running uninstalled — not a real problem
     if (msg.contains(QStringLiteral("Could not register app ID")))
@@ -85,9 +84,6 @@ int main(int argc, char *argv[])
     });
 
     QQmlApplicationEngine engine;
-
-    // Register image provider
-    engine.addImageProvider(QStringLiteral("ma"), new MaImageProvider(client));
 
     // Expose singletons to QML
     engine.rootContext()->setContextObject(new KLocalizedContext(&engine));

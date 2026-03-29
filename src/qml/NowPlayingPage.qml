@@ -24,7 +24,7 @@ Kirigami.Page {
                 width: Math.min(parent.width, parent.height)
                 height: width
                 source: PlayerController.currentTrackImageUrl !== ""
-                    ? "image://ma/" + PlayerController.currentTrackImageUrl
+                    ? PlayerController.currentTrackImageUrl
                     : ""
                 fillMode: Image.PreserveAspectCrop
                 visible: source !== ""

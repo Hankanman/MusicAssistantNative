@@ -74,10 +74,12 @@ Kirigami.ScrollablePage {
                 }
 
                 Image {
-                    source: model.imageUrl ? "image://ma/" + model.imageUrl : ""
+                    readonly property var imgParts: model.imageUrl ? model.imageUrl.split("|") : []
+                    source: imgParts.length >= 2 && imgParts[0] !== "" ? MaClient.getImageUrl(imgParts[0], imgParts[1], 200) : ""
                     Layout.preferredWidth: Kirigami.Units.gridUnit * 2.5
                     Layout.preferredHeight: Kirigami.Units.gridUnit * 2.5
                     fillMode: Image.PreserveAspectCrop
+                    asynchronous: true
                     visible: source !== ""
                 }
 

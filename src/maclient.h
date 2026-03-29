@@ -43,7 +43,7 @@ public:
 
     QString sendCommand(const QString &command, const QJsonObject &args = {}, ResponseCallback callback = nullptr);
 
-    QString getImageUrl(const QString &path, const QString &provider, int size = 0) const;
+    Q_INVOKABLE QString getImageUrl(const QString &path, const QString &provider, int size = 0) const;
     QString token() const;
 
     Q_PROPERTY(bool serverReady READ isServerReady NOTIFY serverReadyChanged)

@@ -113,7 +113,7 @@ Kirigami.ApplicationWindow {
             // Album art thumbnail
             Image {
                 source: PlayerController.currentTrackImageUrl !== ""
-                    ? "image://ma/" + PlayerController.currentTrackImageUrl
+                    ? PlayerController.currentTrackImageUrl
                     : ""
                 Layout.preferredWidth: Kirigami.Units.gridUnit * 3
                 Layout.preferredHeight: Kirigami.Units.gridUnit * 3
