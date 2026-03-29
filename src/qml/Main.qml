@@ -83,6 +83,17 @@ Kirigami.ApplicationWindow {
 
     pageStack.initialPage: settingsPage
 
+    // Auto-select local player when connected (unless a remote player is active)
+    Connections {
+        target: MaClient
+        function onAuthenticatedChanged() {
+            if (MaClient.authenticated && PlayerController.currentPlayerId === "") {
+                PlayerController.currentPlayerId = "__local__"
+                console.log("Auto-selected local player")
+            }
+        }
+    }
+
     function switchPage(page) {
         if (pageStack.currentItem !== page) {
             pageStack.clear()

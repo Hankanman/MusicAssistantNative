@@ -58,6 +58,9 @@ Kirigami.ScrollablePage {
         delegate: MediaItemDelegate {
             width: listView.width
             onItemActivated: (uri) => {
+                console.log("LibraryPage: playMedia uri:", uri,
+                            "queueId:", QueueController.currentQueueId,
+                            "playerId:", PlayerController.currentPlayerId)
                 if (uri !== "") {
                     QueueController.playMedia(uri, "play")
                 }

@@ -77,12 +77,65 @@ void QueueController::setRepeat(const QString &mode)
 
 void QueueController::playMedia(const QString &uri, const QString &option)
 {
+    qDebug() << "QueueController::playMedia uri:" << uri
+             << "option:" << option
+             << "queueId:" << m_currentQueueId
+             << "hasClient:" << (m_client != nullptr);
+
+    if (!m_client) {
+        qDebug() << "QueueController: WARNING - no client connected";
+        return;
+    }
+
+    // __local__ isn't a real MA queue — need to find a real one
+    QString queueId = m_currentQueueId;
+    if (queueId.isEmpty() || queueId == QStringLiteral("__local__")) {
+        qDebug() << "QueueController: no MA queue selected, fetching first available...";
+        // Fetch queues and use the first one
+        m_client->sendCommand(QStringLiteral("player_queues/all"), {},
+            [this, uri, option](const QJsonValue &result, const QString &error) {
+                if (!error.isEmpty() || !result.isArray()) {
+                    qDebug() << "QueueController: failed to fetch queues:" << error;
+                    return;
+                }
+                auto queues = result.toArray();
+                for (const auto &q : queues) {
+                    auto qObj = q.toObject();
+                    if (qObj.value(QStringLiteral("available")).toBool(false)) {
+                        QString foundId = qObj.value(QStringLiteral("queue_id")).toString();
+                        qDebug() << "QueueController: using queue:" << foundId
+                                 << "(" << qObj.value(QStringLiteral("display_name")).toString() << ")";
+                        QJsonObject args;
+                        args[QStringLiteral("queue_id")] = foundId;
+                        args[QStringLiteral("media")] = uri;
+                        args[QStringLiteral("option")] = option;
+                        m_client->sendCommand(QStringLiteral("player_queues/play_media"), args,
+                            [uri](const QJsonValue &, const QString &err) {
+                                if (!err.isEmpty())
+                                    qDebug() << "QueueController: playMedia FAILED:" << err;
+                                else
+                                    qDebug() << "QueueController: playMedia SUCCESS:" << uri;
+                            });
+                        return;
+                    }
+                }
+                qDebug() << "QueueController: no available queues found";
+            });
+        return;
+    }
+
     QJsonObject args;
-    args[QStringLiteral("queue_id")] = m_currentQueueId;
+    args[QStringLiteral("queue_id")] = queueId;
     args[QStringLiteral("media")] = uri;
     args[QStringLiteral("option")] = option;
-    if (m_client)
-        m_client->sendCommand(QStringLiteral("player_queues/play_media"), args);
+    m_client->sendCommand(QStringLiteral("player_queues/play_media"), args,
+        [uri](const QJsonValue &, const QString &error) {
+            if (!error.isEmpty()) {
+                qDebug() << "QueueController: playMedia FAILED:" << error << "for uri:" << uri;
+            } else {
+                qDebug() << "QueueController: playMedia SUCCESS for uri:" << uri;
+            }
+        });
 }
 
 void QueueController::playMediaList(const QStringList &uris, const QString &option)

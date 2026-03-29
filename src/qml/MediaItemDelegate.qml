@@ -103,10 +103,31 @@ QQC2.ItemDelegate {
             visible: model.favorite === true
             color: Kirigami.Theme.positiveTextColor
         }
+
+        // Play button
+        QQC2.ToolButton {
+            icon.name: "media-playback-start"
+            onClicked: {
+                var uri = model.uri || ""
+                console.log("Play button clicked — uri:", uri, "name:", model.name,
+                            "type:", model.mediaType, "player:", PlayerController.currentPlayerId,
+                            "queue:", QueueController.currentQueueId)
+                if (uri !== "") {
+                    delegate.itemActivated(uri)
+                }
+            }
+            QQC2.ToolTip.text: i18n("Play")
+            QQC2.ToolTip.visible: hovered
+        }
     }
 
     onClicked: {
-        delegate.itemActivated(model.uri || "")
+        var uri = model.uri || ""
+        console.log("Item clicked — uri:", uri, "name:", model.name,
+                    "type:", model.mediaType, "player:", PlayerController.currentPlayerId)
+        if (uri !== "") {
+            delegate.itemActivated(uri)
+        }
     }
 
     function formatTime(seconds) {
