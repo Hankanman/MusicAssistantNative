@@ -17,6 +17,7 @@
 #include "playermodel.h"
 #include "queueitemmodel.h"
 #include "imageprovider.h"
+#include "localplayer.h"
 
 int main(int argc, char *argv[])
 {
@@ -48,6 +49,7 @@ int main(int argc, char *argv[])
     auto *queueController = new QueueController(&app);
     auto *libraryController = new LibraryController(&app);
     auto *playerModel = new PlayerModel(&app);
+    auto *localPlayer = new LocalPlayer(&app);
 
     // Wire up
     playerController->setClient(client);
@@ -72,6 +74,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty(QStringLiteral("QueueController"), queueController);
     engine.rootContext()->setContextProperty(QStringLiteral("LibraryController"), libraryController);
     engine.rootContext()->setContextProperty(QStringLiteral("PlayerModel"), playerModel);
+    engine.rootContext()->setContextProperty(QStringLiteral("LocalPlayer"), localPlayer);
 
     // Connect to warnings before loading
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed,

@@ -147,11 +147,12 @@ Kirigami.Page {
             QQC2.ToolButton {
                 icon.name: {
                     switch (QueueController.repeatMode) {
-                    case "one": return "media-playlist-repeat-song"
-                    case "all": return "media-playlist-repeat"
-                    default: return "media-playlist-no-repeat"
+                    case "one": return "media-repeat-single"
+                    case "all": return "media-repeat-all"
+                    default: return "media-repeat-none"
                     }
                 }
+                checked: QueueController.repeatMode !== "off"
                 onClicked: {
                     switch (QueueController.repeatMode) {
                     case "off": QueueController.setRepeat("all"); break

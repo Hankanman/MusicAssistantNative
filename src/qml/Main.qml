@@ -95,7 +95,10 @@ Kirigami.ApplicationWindow {
         visible: root.isConnected && PlayerController.currentPlayerId !== ""
         height: visible ? implicitHeight : 0
 
-        contentItem: RowLayout {
+        RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: Kirigami.Units.smallSpacing
+            anchors.rightMargin: Kirigami.Units.smallSpacing
             spacing: Kirigami.Units.smallSpacing
 
             // Album art thumbnail
