@@ -149,8 +149,10 @@ void SendspinClient::onTextMessageReceived(const QString &message)
     QString type = msg.value(QStringLiteral("type")).toString();
     QJsonObject payload = msg.value(QStringLiteral("payload")).toObject();
 
-    qDebug() << "SendspinClient: received" << type
-             << "payload keys:" << payload.keys();
+    // Don't log high-frequency messages
+    if (type != QStringLiteral("server/time"))
+        qDebug() << "SendspinClient: received" << type
+                 << "payload keys:" << payload.keys();
 
     if (type == QStringLiteral("auth_ok")) {
         qDebug() << "SendspinClient: auth OK, sending hello...";
