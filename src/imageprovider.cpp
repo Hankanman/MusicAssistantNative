@@ -4,15 +4,16 @@
 #include <QQuickTextureFactory>
 
 MaImageResponse::MaImageResponse(const QString &imageUrl, const QSize &requestedSize,
-                                 QNetworkAccessManager *nam, const QString &authToken)
+                                 const QString &authToken)
     : m_requestedSize(requestedSize)
 {
     QNetworkRequest req;
     req.setUrl(QUrl(imageUrl));
     if (!authToken.isEmpty()) {
-        req.setRawHeader("Authorization", QStringLiteral("Bearer %1").arg(authToken).toUtf8());
+        req.setRawHeader("Authorization",
+                         QStringLiteral("Bearer %1").arg(authToken).toUtf8());
     }
-    auto *reply = nam->get(req);
+    auto *reply = m_nam.get(req);
     connect(reply, &QNetworkReply::finished, this, &MaImageResponse::onFinished);
 }
 
@@ -74,9 +75,9 @@ QQuickImageResponse *MaImageProvider::requestImageResponse(const QString &id, co
         int size = requestedSize.isValid() ? qMax(requestedSize.width(), requestedSize.height()) : 300;
         url = m_client->getImageUrl(parts.at(0), parts.at(1), size);
     } else {
-        // Assume it's already a full URL
-        url = id;
+        // Assume it's already a full URL or image proxy path
+        url = m_client->getImageUrl(id, QString(), 300);
     }
 
-    return new MaImageResponse(url, requestedSize, &m_nam, m_client->token());
+    return new MaImageResponse(url, requestedSize, m_client->token());
 }

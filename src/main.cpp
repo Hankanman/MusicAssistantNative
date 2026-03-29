@@ -81,14 +81,13 @@ int main(int argc, char *argv[])
                      &app, []() { qCritical("QML object creation failed"); },
                      Qt::QueuedConnection);
 
-    const QUrl mainUrl(QStringLiteral("qrc:/qt/qml/io/github/musicassistant/native/qml/Main.qml"));
-    engine.load(mainUrl);
+    // Try both possible resource paths (depends on Qt QTP0001 policy)
+    const QUrl url1(QStringLiteral("qrc:/io/github/musicassistant/native/qml/Main.qml"));
+    const QUrl url2(QStringLiteral("qrc:/qt/qml/io/github/musicassistant/native/qml/Main.qml"));
 
-    if (engine.rootObjects().isEmpty()) {
-        // Try alternate resource path
-        const QUrl altUrl(QStringLiteral("qrc:/io/github/musicassistant/native/qml/Main.qml"));
-        engine.load(altUrl);
-    }
+    engine.load(url1);
+    if (engine.rootObjects().isEmpty())
+        engine.load(url2);
 
     if (engine.rootObjects().isEmpty()) {
         qCritical("Failed to load QML - no root objects created");

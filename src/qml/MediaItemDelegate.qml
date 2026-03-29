@@ -6,7 +6,7 @@ import org.kde.kirigami as Kirigami
 QQC2.ItemDelegate {
     id: delegate
 
-    signal clicked(string uri)
+    signal itemActivated(string uri)
 
     contentItem: RowLayout {
         spacing: Kirigami.Units.smallSpacing
@@ -90,7 +90,7 @@ QQC2.ItemDelegate {
     }
 
     onClicked: {
-        delegate.clicked(model.uri || "")
+        delegate.itemActivated(model.uri || "")
     }
 
     function formatTime(seconds) {

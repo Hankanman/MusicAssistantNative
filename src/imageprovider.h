@@ -2,7 +2,6 @@
 
 #include <QQuickAsyncImageProvider>
 #include <QNetworkAccessManager>
-#include <QThreadPool>
 
 class MaClient;
 
@@ -12,7 +11,7 @@ class MaImageResponse : public QQuickImageResponse
 
 public:
     MaImageResponse(const QString &url, const QSize &requestedSize,
-                    QNetworkAccessManager *nam, const QString &authToken = {});
+                    const QString &authToken = {});
 
     QQuickTextureFactory *textureFactory() const override;
     QString errorString() const override;
@@ -21,6 +20,7 @@ private Q_SLOTS:
     void onFinished();
 
 private:
+    QNetworkAccessManager m_nam;
     QImage m_image;
     QString m_error;
     QSize m_requestedSize;
@@ -35,5 +35,4 @@ public:
 
 private:
     MaClient *m_client;
-    QNetworkAccessManager m_nam;
 };

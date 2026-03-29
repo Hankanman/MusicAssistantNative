@@ -57,7 +57,7 @@ Kirigami.ScrollablePage {
         model: getCurrentModel()
         delegate: MediaItemDelegate {
             width: listView.width
-            onClicked: (uri) => {
+            onItemActivated: (uri) => {
                 if (uri !== "") {
                     QueueController.playMedia(uri, "play")
                 }
