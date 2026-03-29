@@ -108,15 +108,14 @@ void SendspinClient::disconnect()
 
 void SendspinClient::onConnected()
 {
-    qDebug() << "SendspinClient: WebSocket connected, sending hello directly...";
+    qDebug() << "SendspinClient: connected";
     m_authenticated = true;
     sendHello();
 }
 
 void SendspinClient::onDisconnected()
 {
-    qDebug() << "SendspinClient: disconnected - close code:" << m_socket.closeCode()
-             << "reason:" << m_socket.closeReason();
+    qDebug() << "SendspinClient: disconnected";
     m_stateTimer.stop();
     m_timeTimer.stop();
     m_authenticated = false;
@@ -132,7 +131,6 @@ void SendspinClient::onDisconnected()
 
     // Auto-reconnect after 3 seconds if we were previously registered
     if (wasRegistered && !m_lastServerUrl.isEmpty()) {
-        qDebug() << "SendspinClient: will reconnect in 3s...";
         QTimer::singleShot(3000, this, [this]() {
             if (!m_registered) {
                 connectToServer(m_lastServerUrl, m_token);
@@ -150,37 +148,22 @@ void SendspinClient::onTextMessageReceived(const QString &message)
     QString type = msg.value(QStringLiteral("type")).toString();
     QJsonObject payload = msg.value(QStringLiteral("payload")).toObject();
 
-    // Don't log high-frequency messages
-    if (type != QStringLiteral("server/time"))
-        qDebug() << "SendspinClient: received" << type
-                 << "payload keys:" << payload.keys();
-
     if (type == QStringLiteral("auth_ok")) {
-        qDebug() << "SendspinClient: auth OK, sending hello...";
         m_authenticated = true;
         sendHello();
     } else if (type == QStringLiteral("server/time")) {
-        // Must respond to time probes to stay connected
         sendTimePing();
-        return;
     } else if (type == QStringLiteral("group/update")) {
-        // Player group state changed — informational
-        return;
+        // Player group state changed -- informational, no action needed
     } else if (type == QStringLiteral("server/hello")) {
-        qDebug() << "SendspinClient: server/hello received:"
-                 << "active_roles:" << payload.value(QStringLiteral("active_roles"))
-                 << "connection_reason:" << payload.value(QStringLiteral("connection_reason")).toString()
-                 << "server_id:" << payload.value(QStringLiteral("server_id")).toString()
-                 << "version:" << payload.value(QStringLiteral("version"));
+        qDebug() << "SendspinClient: registered as player";
         m_registered = true;
         Q_EMIT registeredChanged();
         m_stateTimer.start();
         m_timeTimer.start();
-        // Send initial time sync burst (8 probes like web frontend) and state
         for (int i = 0; i < 8; ++i)
             sendTimePing();
         sendState();
-        qDebug() << "SendspinClient: sent initial time sync burst + state";
     } else if (type == QStringLiteral("server/state")) {
         handleServerState(payload);
     } else if (type == QStringLiteral("server/command")) {
@@ -191,27 +174,16 @@ void SendspinClient::onTextMessageReceived(const QString &message)
         handleStreamEnd();
     } else if (type == QStringLiteral("stream/clear")) {
         handleStreamClear();
-    } else if (type == QStringLiteral("server/time")) {
-        handleTimeResponse(payload);
     } else if (type == QStringLiteral("server/goodbye")) {
-        qDebug() << "SendspinClient: server said goodbye -"
-                 << payload.value(QStringLiteral("reason")).toString();
+        qDebug() << "SendspinClient: server goodbye:" << payload.value(QStringLiteral("reason")).toString();
     } else if (type == QStringLiteral("error")) {
-        qDebug() << "SendspinClient: ERROR from server:"
-                 << QJsonDocument(payload).toJson(QJsonDocument::Compact);
-    } else {
-        qDebug() << "SendspinClient: UNHANDLED message type:" << type
-                 << "full:" << QJsonDocument(msg).toJson(QJsonDocument::Compact).left(500);
+        qDebug() << "SendspinClient: error:" << QJsonDocument(payload).toJson(QJsonDocument::Compact);
     }
 }
 
 void SendspinClient::onBinaryMessageReceived(const QByteArray &data)
 {
     m_binFrameCount++;
-    if (m_binFrameCount <= 3 || m_binFrameCount % 100 == 0) {
-        qDebug() << "SendspinClient: BIN frame #" << m_binFrameCount
-                 << "size:" << data.size() << "bytes";
-    }
 
     // Binary frames: byte 0 = role+slot, bytes 1-8 = timestamp, bytes 9+ = audio
     if (data.size() < 9) return;
@@ -289,11 +261,9 @@ void SendspinClient::sendHello()
     payload[QStringLiteral("player@v1_support")] = playerSupport;
 
     hello[QStringLiteral("payload")] = payload;
-
-    qDebug() << "SendspinClient: sending hello as" << m_playerName << "id:" << m_playerId;
     sendJson(hello);
 
-    // CRITICAL: Send time sync burst immediately after hello, before server timeout
+    // Send time sync burst immediately after hello, before server timeout
     for (int i = 0; i < 8; ++i)
         sendTimePing();
 }
@@ -334,12 +304,7 @@ void SendspinClient::sendTimePing()
 
 void SendspinClient::handleServerState(const QJsonObject &payload)
 {
-    auto metadata = payload.value(QStringLiteral("metadata")).toObject();
-    if (!metadata.isEmpty()) {
-        qDebug() << "SendspinClient: now playing -"
-                 << metadata.value(QStringLiteral("title")).toString()
-                 << "by" << metadata.value(QStringLiteral("artist")).toString();
-    }
+    Q_UNUSED(payload)
 }
 
 void SendspinClient::handleServerCommand(const QJsonObject &payload)
@@ -348,7 +313,6 @@ void SendspinClient::handleServerCommand(const QJsonObject &payload)
     if (playerCmd.isEmpty()) return;
 
     QString cmd = playerCmd.value(QStringLiteral("command")).toString();
-    qDebug() << "SendspinClient: server command:" << cmd;
 
     if (cmd == QStringLiteral("volume")) {
         m_volume = playerCmd.value(QStringLiteral("volume")).toInt(m_volume);
@@ -368,23 +332,20 @@ void SendspinClient::handleStreamStart(const QJsonObject &payload)
     m_sampleRate = playerInfo.value(QStringLiteral("sample_rate")).toInt(48000);
     m_channels = playerInfo.value(QStringLiteral("channels")).toInt(2);
 
-    qDebug() << "SendspinClient: stream starting - codec:" << m_currentCodec
+    qDebug() << "SendspinClient: stream start - codec:" << m_currentCodec
              << "rate:" << m_sampleRate << "ch:" << m_channels;
 
     m_binFrameCount = 0;
     m_playing = true;
     Q_EMIT playingChanged();
 
-    // Start audio decoder pipeline
     m_audioDecoder->start(m_currentCodec, m_sampleRate, m_channels, 16);
-
     sendState();
-    qDebug() << "SendspinClient: audio pipeline started";
 }
 
 void SendspinClient::handleStreamEnd()
 {
-    qDebug() << "SendspinClient: stream ended (" << m_binFrameCount << "frames received)";
+    qDebug() << "SendspinClient: stream ended";
     m_audioDecoder->stop();
     m_playing = false;
     Q_EMIT playingChanged();
@@ -393,13 +354,10 @@ void SendspinClient::handleStreamEnd()
 
 void SendspinClient::handleStreamClear()
 {
-    qDebug() << "SendspinClient: stream cleared (skip/seek)";
     m_audioDecoder->stop();
 }
 
 void SendspinClient::handleTimeResponse(const QJsonObject &payload)
 {
-    // NTP-style time sync — store offset for future use
     Q_UNUSED(payload)
-    // TODO: Implement Kalman time filter for sample-accurate sync
 }

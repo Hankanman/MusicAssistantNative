@@ -7,7 +7,6 @@ add_executable(musicassistant-native
     mediaitemmodel.cpp
     playermodel.cpp
     queueitemmodel.cpp
-    localplayer.cpp
     sendspinclient.cpp
     audiodecoder.cpp
 )

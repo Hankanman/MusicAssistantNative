@@ -16,7 +16,6 @@
 #include "mediaitemmodel.h"
 #include "playermodel.h"
 #include "queueitemmodel.h"
-#include "localplayer.h"
 #include "sendspinclient.h"
 
 int main(int argc, char *argv[])
@@ -49,7 +48,6 @@ int main(int argc, char *argv[])
     auto *queueController = new QueueController(&app);
     auto *libraryController = new LibraryController(&app);
     auto *playerModel = new PlayerModel(&app);
-    auto *localPlayer = new LocalPlayer(&app);
     auto *sendspinClient = new SendspinClient(&app);
 
     // Wire up
@@ -81,7 +79,6 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty(QStringLiteral("QueueController"), queueController);
     engine.rootContext()->setContextProperty(QStringLiteral("LibraryController"), libraryController);
     engine.rootContext()->setContextProperty(QStringLiteral("PlayerModel"), playerModel);
-    engine.rootContext()->setContextProperty(QStringLiteral("LocalPlayer"), localPlayer);
     engine.rootContext()->setContextProperty(QStringLiteral("SendspinClient"), sendspinClient);
 
     // Connect to warnings before loading

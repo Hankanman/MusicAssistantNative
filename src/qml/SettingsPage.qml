@@ -128,7 +128,6 @@ Kirigami.Page {
         function onServerReadyChanged() {
             // Only send auth AFTER the server has sent its info message
             if (MaClient.serverReady) {
-                console.log("Server ready, sending credentials...")
                 if (connectAndAuth.useCredentials) {
                     MaClient.loginWithCredentials(connectAndAuth.username, connectAndAuth.password)
                 } else if (connectAndAuth.token.length > 0) {

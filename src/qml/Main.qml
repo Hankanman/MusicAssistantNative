@@ -94,7 +94,6 @@ Kirigami.ApplicationWindow {
                     var pid = PlayerModel.playerIdAt(i)
                     if (pid === localId) {
                         PlayerController.currentPlayerId = pid
-                        console.log("Auto-selected local player:", pid)
                         return
                     }
                 }
@@ -102,7 +101,6 @@ Kirigami.ApplicationWindow {
                 var firstId = PlayerModel.playerIdAt(0)
                 if (firstId !== "") {
                     PlayerController.currentPlayerId = firstId
-                    console.log("Auto-selected fallback player:", firstId)
                 }
             }
         }

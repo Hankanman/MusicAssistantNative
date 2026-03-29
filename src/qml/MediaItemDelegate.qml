@@ -109,9 +109,6 @@ QQC2.ItemDelegate {
             icon.name: "media-playback-start"
             onClicked: {
                 var uri = model.uri || ""
-                console.log("Play button clicked — uri:", uri, "name:", model.name,
-                            "type:", model.mediaType, "player:", PlayerController.currentPlayerId,
-                            "queue:", QueueController.currentQueueId)
                 if (uri !== "") {
                     delegate.itemActivated(uri)
                 }
@@ -123,8 +120,6 @@ QQC2.ItemDelegate {
 
     onClicked: {
         var uri = model.uri || ""
-        console.log("Item clicked — uri:", uri, "name:", model.name,
-                    "type:", model.mediaType, "player:", PlayerController.currentPlayerId)
         if (uri !== "") {
             delegate.itemActivated(uri)
         }

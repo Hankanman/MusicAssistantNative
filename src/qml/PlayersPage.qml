@@ -124,7 +124,6 @@ Kirigami.ScrollablePage {
 
             onClicked: {
                 PlayerController.currentPlayerId = model.playerId
-                console.log("Selected player:", model.playerId, model.name)
             }
         }
 

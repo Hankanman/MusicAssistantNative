@@ -79,10 +79,9 @@ void MaClient::authenticate(const QString &token)
     m_token = token;
     QJsonObject args;
     args[QStringLiteral("token")] = token;
-    qDebug() << "MaClient: sending auth command with token (length:" << token.length() << ")";
     sendCommand(QStringLiteral("auth"), args, [this](const QJsonValue &/*result*/, const QString &error) {
         if (error.isEmpty()) {
-            qDebug() << "MaClient: authentication successful!";
+            qDebug() << "MaClient: authenticated";
             m_authenticated = true;
             Q_EMIT authenticatedChanged();
         } else {
@@ -94,42 +93,29 @@ void MaClient::authenticate(const QString &token)
 
 void MaClient::loginWithCredentials(const QString &username, const QString &password)
 {
-    qDebug() << "MaClient: loginWithCredentials for user:" << username;
     QJsonObject args;
     args[QStringLiteral("username")] = username;
     args[QStringLiteral("password")] = password;
     args[QStringLiteral("provider_id")] = QStringLiteral("builtin");
     args[QStringLiteral("device_name")] = QStringLiteral("Music Assistant Native");
     sendCommand(QStringLiteral("auth/login"), args, [this](const QJsonValue &result, const QString &error) {
-        qDebug() << "MaClient: login response - error:" << error
-                 << "result type:" << (result.isObject() ? "object" : result.isString() ? "string" : "other")
-                 << "result:" << QJsonDocument(result.toObject()).toJson(QJsonDocument::Compact).left(500);
         if (error.isEmpty() && result.isObject()) {
             auto obj = result.toObject();
             bool success = obj.value(QStringLiteral("success")).toBool(false);
             if (!success) {
                 QString errMsg = obj.value(QStringLiteral("error")).toString(QStringLiteral("Unknown error"));
-                qDebug() << "MaClient: login rejected:" << errMsg;
                 Q_EMIT connectionError(QStringLiteral("Login failed: ") + errMsg);
                 return;
             }
             m_token = obj.value(QStringLiteral("access_token")).toString();
             if (!m_token.isEmpty()) {
-                qDebug() << "MaClient: got access_token from login, authenticating...";
                 authenticate(m_token);
             } else {
-                qDebug() << "MaClient: login succeeded but no access_token in response. Keys:" << obj.keys();
                 Q_EMIT connectionError(QStringLiteral("Login succeeded but no token returned"));
             }
-        } else if (error.isEmpty()) {
-            // Maybe the result IS the token string
-            if (result.isString()) {
-                m_token = result.toString();
-                qDebug() << "MaClient: got token string directly, authenticating...";
-                authenticate(m_token);
-            } else {
-                Q_EMIT connectionError(QStringLiteral("Unexpected login response format"));
-            }
+        } else if (error.isEmpty() && result.isString()) {
+            m_token = result.toString();
+            authenticate(m_token);
         } else {
             Q_EMIT connectionError(QStringLiteral("Login failed: ") + error);
         }
@@ -180,7 +166,6 @@ void MaClient::saveSettings()
     settings.setValue(QStringLiteral("token"), m_token);
     settings.endGroup();
     settings.sync();
-    qDebug() << "MaClient: settings saved";
 }
 
 void MaClient::loadSettings()
@@ -205,7 +190,6 @@ void MaClient::connectWithSavedSettings()
 {
     loadSettings();
     if (!m_serverUrl.isEmpty() && !m_token.isEmpty()) {
-        qDebug() << "MaClient: auto-connecting with saved settings to" << m_serverUrl;
         connectToServer(m_serverUrl);
     }
 }
@@ -240,7 +224,6 @@ void MaClient::onTextMessageReceived(const QString &message)
 
     // Server info message (has server_id field)
     if (msg.contains(QStringLiteral("server_id"))) {
-        qDebug() << "MaClient: received ServerInfoMessage";
         handleServerInfo(msg);
         return;
     }
@@ -253,17 +236,9 @@ void MaClient::onTextMessageReceived(const QString &message)
 
     // Command result (has message_id)
     if (msg.contains(QStringLiteral("message_id"))) {
-        QString msgId = msg.value(QStringLiteral("message_id")).toString();
-        bool isError = msg.contains(QStringLiteral("error_code"));
-        if (isError)
-            qDebug() << "MaClient: response for message_id:" << msgId << "ERROR:" << msg.value(QStringLiteral("details")).toString();
-        else
-            qDebug() << "MaClient: response for message_id:" << msgId << "OK";
         handleCommandResult(msg);
         return;
     }
-
-    qDebug() << "MaClient: unknown message:" << message.left(200);
 }
 
 void MaClient::onError(QAbstractSocket::SocketError error)
@@ -290,7 +265,6 @@ void MaClient::handleServerInfo(const QJsonObject &msg)
 
     // Auto-authenticate if we have a token
     if (!m_token.isEmpty()) {
-        qDebug() << "MaClient: auto-authenticating with stored token";
         authenticate(m_token);
     }
 }

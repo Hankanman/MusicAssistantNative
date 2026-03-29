@@ -77,20 +77,7 @@ void QueueController::setRepeat(const QString &mode)
 
 void QueueController::playMedia(const QString &uri, const QString &option)
 {
-    qDebug() << "QueueController::playMedia uri:" << uri
-             << "option:" << option
-             << "queueId:" << m_currentQueueId
-             << "hasClient:" << (m_client != nullptr);
-
-    if (!m_client) {
-        qDebug() << "QueueController: WARNING - no client connected";
-        return;
-    }
-
-    if (m_currentQueueId.isEmpty()) {
-        qDebug() << "QueueController: WARNING - no queue selected. Select a player first.";
-        return;
-    }
+    if (!m_client || m_currentQueueId.isEmpty()) return;
 
     QJsonObject args;
     args[QStringLiteral("queue_id")] = m_currentQueueId;
@@ -99,9 +86,7 @@ void QueueController::playMedia(const QString &uri, const QString &option)
     m_client->sendCommand(QStringLiteral("player_queues/play_media"), args,
         [uri](const QJsonValue &, const QString &error) {
             if (!error.isEmpty()) {
-                qDebug() << "QueueController: playMedia FAILED:" << error << "for uri:" << uri;
-            } else {
-                qDebug() << "QueueController: playMedia SUCCESS for uri:" << uri;
+                qWarning() << "QueueController: playMedia failed:" << error << "uri:" << uri;
             }
         });
 }

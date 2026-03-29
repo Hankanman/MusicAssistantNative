@@ -13,23 +13,27 @@ Native KDE Plasma desktop client for [Music Assistant](https://music-assistant.i
 ## Architecture
 
 ```
-┌─────────────────────────────────────────┐
-│              QML / Kirigami UI          │
-│  (Main, NowPlaying, Library, Queue,    │
-│   Players, Settings pages)              │
-├─────────────────────────────────────────┤
-│          C++ Backend Layer              │
-│  ┌──────────┐ ┌──────────┐ ┌─────────┐ │
-│  │MaClient  │ │Models    │ │Image    │ │
-│  │(WebSocket│ │(Player,  │ │Provider │ │
-│  │ JSON-RPC)│ │Queue,    │ │         │ │
-│  │          │ │MediaItem)│ │         │ │
-│  └──────────┘ └──────────┘ └─────────┘ │
-├─────────────────────────────────────────┤
-│       Music Assistant Server            │
-│       (WebSocket API at /ws)            │
-└─────────────────────────────────────────┘
+┌─────────────────────────────────────────────┐
+│              QML / Kirigami UI              │
+│  (Main, NowPlaying, Library, Queue,        │
+│   Players, Settings pages)                  │
+├─────────────────────────────────────────────┤
+│            C++ Backend Layer                │
+│  ┌──────────┐ ┌──────────┐ ┌─────────────┐ │
+│  │MaClient  │ │Models    │ │Sendspin     │ │
+│  │(WebSocket│ │(Player,  │ │Client       │ │
+│  │ JSON-RPC)│ │Queue,    │ │+ AudioDecoder│ │
+│  │          │ │MediaItem)│ │(local audio)│ │
+│  └──────────┘ └──────────┘ └─────────────┘ │
+├─────────────────────────────────────────────┤
+│       Music Assistant Server                │
+│  WebSocket API (/ws) + Sendspin (:8927)     │
+└─────────────────────────────────────────────┘
 ```
+
+- **MaClient**: WebSocket JSON-RPC client for the MA control API (library, players, queues)
+- **SendspinClient**: Registers as a Sendspin player, receives audio stream frames
+- **AudioDecoder**: Decodes streamed audio (FLAC) via QMediaPlayer to local speakers
 
 ## Music Assistant API
 
@@ -75,7 +79,8 @@ src/
   mediaitemmodel.h/cpp      # QAbstractListModel for media items
   playermodel.h/cpp         # QAbstractListModel for players
   queueitemmodel.h/cpp      # QAbstractListModel for queue items
-  imageprovider.h/cpp       # QQuickAsyncImageProvider for album art
+  sendspinclient.h/cpp      # Sendspin player registration + audio streaming
+  audiodecoder.h/cpp        # Audio decoding via QMediaPlayer (FLAC/Opus)
   qml/
     Main.qml                # App window + navigation
     NowPlayingPage.qml      # Current track, controls, art
@@ -83,7 +88,9 @@ src/
     QueuePage.qml           # Current queue
     PlayersPage.qml         # Player selection & volume
     SettingsPage.qml        # Server connection settings
+    MediaItemDelegate.qml   # Reusable delegate for media list items
 io.github.musicassistant.native.desktop
 io.github.musicassistant.native.metainfo.xml
 musicassistant-native.spec      # RPM spec file
+tests/                          # Python integration tests (pytest)
 ```
