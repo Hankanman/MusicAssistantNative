@@ -302,7 +302,8 @@ void SendspinClient::sendState()
 
     QJsonObject payload;
     QJsonObject playerState;
-    playerState[QStringLiteral("state")] = m_playing ? QStringLiteral("synchronized") : QStringLiteral("idle");
+    // Valid states: "synchronized", "error", "external_source" — no "idle" in Sendspin protocol
+    playerState[QStringLiteral("state")] = QStringLiteral("synchronized");
     playerState[QStringLiteral("volume")] = m_volume;
     playerState[QStringLiteral("muted")] = m_muted;
     payload[QStringLiteral("player")] = playerState;
@@ -313,7 +314,7 @@ void SendspinClient::sendState()
 
 void SendspinClient::sendTimePing()
 {
-    if (!m_registered) return;
+    if (!m_authenticated) return;
 
     QJsonObject ping;
     ping[QStringLiteral("type")] = QStringLiteral("client/time");
