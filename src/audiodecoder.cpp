@@ -80,16 +80,15 @@ void AudioDecoder::start(const QString &codec, int sampleRate, int channels, int
 void AudioDecoder::stop()
 {
     if (m_decoder) {
-        m_decoder->closeWriteChannel();
-        m_decoder->waitForFinished(1000);
-        if (m_decoder->state() != QProcess::NotRunning)
-            m_decoder->kill();
+        // Kill immediately — don't wait for buffered data to finish
+        m_decoder->kill();
+        m_decoder->waitForFinished(500);
         delete m_decoder;
         m_decoder = nullptr;
     }
 
     if (m_audioSink) {
-        m_audioSink->stop();
+        m_audioSink->reset(); // flush buffer immediately (stop() would drain it)
         delete m_audioSink;
         m_audioSink = nullptr;
     }
