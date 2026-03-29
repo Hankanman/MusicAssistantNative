@@ -83,13 +83,23 @@ Kirigami.ApplicationWindow {
 
     pageStack.initialPage: settingsPage
 
-    // Auto-select local player when connected (unless a remote player is active)
+    // Auto-select first available MA player when connected
     Connections {
-        target: MaClient
-        function onAuthenticatedChanged() {
-            if (MaClient.authenticated && PlayerController.currentPlayerId === "") {
-                PlayerController.currentPlayerId = "__local__"
-                console.log("Auto-selected local player")
+        target: PlayerModel
+        function onCountChanged() {
+            if (PlayerModel.count > 0 && PlayerController.currentPlayerId === "") {
+                // Pick first available powered player, or just first available
+                var bestId = ""
+                for (var i = 0; i < PlayerModel.count; i++) {
+                    var pid = PlayerModel.playerIdAt(i)
+                    if (pid !== "" && bestId === "") {
+                        bestId = pid
+                    }
+                }
+                if (bestId !== "") {
+                    PlayerController.currentPlayerId = bestId
+                    console.log("Auto-selected player:", bestId)
+                }
             }
         }
     }

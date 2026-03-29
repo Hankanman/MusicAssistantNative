@@ -33,12 +33,13 @@ static void messageFilter(QtMsgType type, const QMessageLogContext &/*ctx*/, con
 
     // Default handler for everything else
     switch (type) {
-    case QtDebugMsg: fprintf(stderr, "%s\n", qPrintable(msg)); break;
-    case QtInfoMsg: fprintf(stderr, "%s\n", qPrintable(msg)); break;
-    case QtWarningMsg: fprintf(stderr, "Warning: %s\n", qPrintable(msg)); break;
-    case QtCriticalMsg: fprintf(stderr, "Critical: %s\n", qPrintable(msg)); break;
-    case QtFatalMsg: fprintf(stderr, "Fatal: %s\n", qPrintable(msg)); abort();
+    case QtDebugMsg: fprintf(stderr, "[DBG] %s\n", qPrintable(msg)); break;
+    case QtInfoMsg: fprintf(stderr, "[INF] %s\n", qPrintable(msg)); break;
+    case QtWarningMsg: fprintf(stderr, "[WRN] %s\n", qPrintable(msg)); break;
+    case QtCriticalMsg: fprintf(stderr, "[ERR] %s\n", qPrintable(msg)); break;
+    case QtFatalMsg: fprintf(stderr, "[FATAL] %s\n", qPrintable(msg)); abort();
     }
+    fflush(stderr);
 }
 
 int main(int argc, char *argv[])

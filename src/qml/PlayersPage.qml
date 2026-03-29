@@ -15,22 +15,30 @@ Kirigami.ScrollablePage {
         }
     ]
 
-    ColumnLayout {
-        spacing: 0
+    header: Kirigami.InlineMessage {
+        visible: PlayerController.currentPlayerId !== ""
+        type: Kirigami.MessageType.Information
+        text: i18n("Active player: %1", PlayerController.playerName || PlayerController.currentPlayerId)
+    }
 
-        // Local player card — always shown at top
-        QQC2.ItemDelegate {
-            Layout.fillWidth: true
-            highlighted: PlayerController.currentPlayerId === "__local__"
+    ListView {
+        id: playerListView
+        model: PlayerModel
+
+        delegate: QQC2.ItemDelegate {
+            width: playerListView.width
+            highlighted: model.playerId === PlayerController.currentPlayerId
 
             contentItem: RowLayout {
                 spacing: Kirigami.Units.smallSpacing
 
                 Kirigami.Icon {
-                    source: "computer"
+                    source: model.playerId === PlayerController.currentPlayerId ? "media-playback-start" : "speaker"
                     Layout.preferredWidth: Kirigami.Units.iconSizes.medium
                     Layout.preferredHeight: Kirigami.Units.iconSizes.medium
-                    color: Kirigami.Theme.positiveTextColor
+                    color: model.available
+                        ? (model.playerId === PlayerController.currentPlayerId ? Kirigami.Theme.positiveTextColor : Kirigami.Theme.textColor)
+                        : Kirigami.Theme.disabledTextColor
                 }
 
                 ColumnLayout {
@@ -40,141 +48,75 @@ Kirigami.ScrollablePage {
                     RowLayout {
                         spacing: Kirigami.Units.smallSpacing
                         QQC2.Label {
-                            text: LocalPlayer.playerName
-                            font.bold: PlayerController.currentPlayerId === "__local__"
+                            text: model.name
+                            font.bold: model.playerId === PlayerController.currentPlayerId
                             elide: Text.ElideRight
                             Layout.fillWidth: true
                         }
                         Kirigami.Chip {
-                            text: i18n("This device")
+                            text: i18n("Active")
+                            visible: model.playerId === PlayerController.currentPlayerId
                             closable: false
                             checkable: false
                         }
                     }
                     QQC2.Label {
-                        text: LocalPlayer.playing ? i18n("Local playback · playing") : i18n("Local playback · idle")
+                        text: {
+                            var parts = [model.provider]
+                            if (model.playbackState && model.playbackState !== "idle") {
+                                parts.push(model.playbackState)
+                            }
+                            if (!model.available) parts.push(i18n("unavailable"))
+                            return parts.join(" · ")
+                        }
                         font.pointSize: Kirigami.Theme.smallFont.pointSize
                         color: Kirigami.Theme.disabledTextColor
+                        elide: Text.ElideRight
+                        Layout.fillWidth: true
                     }
+                }
+
+                QQC2.ToolButton {
+                    icon.name: "system-shutdown"
+                    checked: model.powered
+                    onClicked: {
+                        PlayerController.currentPlayerId = model.playerId
+                        PlayerController.setPower(!model.powered)
+                    }
+                    QQC2.ToolTip.text: model.powered ? i18n("Power off") : i18n("Power on")
+                    QQC2.ToolTip.visible: hovered
                 }
 
                 QQC2.Slider {
                     Layout.preferredWidth: Kirigami.Units.gridUnit * 8
                     from: 0
                     to: 100
-                    value: LocalPlayer.volume
-                    onMoved: LocalPlayer.setVolume(Math.round(value))
+                    value: model.volumeLevel
+                    enabled: model.available
+                    onMoved: {
+                        PlayerController.currentPlayerId = model.playerId
+                        PlayerController.setVolume(Math.round(value))
+                    }
                 }
 
                 QQC2.Label {
-                    text: LocalPlayer.volume + "%"
+                    text: model.volumeLevel + "%"
                     font.pointSize: Kirigami.Theme.smallFont.pointSize
                     Layout.preferredWidth: Kirigami.Units.gridUnit * 2
                 }
             }
 
             onClicked: {
-                PlayerController.currentPlayerId = "__local__"
-            }
-        }
-
-        Kirigami.Separator { Layout.fillWidth: true }
-
-        // Section header for remote players
-        Kirigami.Heading {
-            text: i18n("Remote Players")
-            level: 4
-            Layout.fillWidth: true
-            Layout.topMargin: Kirigami.Units.largeSpacing
-            Layout.leftMargin: Kirigami.Units.largeSpacing
-            Layout.bottomMargin: Kirigami.Units.smallSpacing
-        }
-
-        // Remote players list
-        Repeater {
-            model: PlayerModel
-
-            QQC2.ItemDelegate {
-                Layout.fillWidth: true
-                highlighted: model.playerId === PlayerController.currentPlayerId
-
-                contentItem: RowLayout {
-                    spacing: Kirigami.Units.smallSpacing
-
-                    Kirigami.Icon {
-                        source: "speaker"
-                        Layout.preferredWidth: Kirigami.Units.iconSizes.medium
-                        Layout.preferredHeight: Kirigami.Units.iconSizes.medium
-                        color: model.available ? Kirigami.Theme.textColor : Kirigami.Theme.disabledTextColor
-                    }
-
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 0
-
-                        QQC2.Label {
-                            text: model.name
-                            font.bold: model.playerId === PlayerController.currentPlayerId
-                            elide: Text.ElideRight
-                            Layout.fillWidth: true
-                        }
-                        QQC2.Label {
-                            text: {
-                                var parts = [model.provider]
-                                if (model.playbackState && model.playbackState !== "idle") {
-                                    parts.push(model.playbackState)
-                                }
-                                return parts.join(" · ")
-                            }
-                            font.pointSize: Kirigami.Theme.smallFont.pointSize
-                            color: Kirigami.Theme.disabledTextColor
-                            elide: Text.ElideRight
-                            Layout.fillWidth: true
-                        }
-                    }
-
-                    QQC2.ToolButton {
-                        icon.name: "system-shutdown"
-                        checked: model.powered
-                        onClicked: {
-                            PlayerController.currentPlayerId = model.playerId
-                            PlayerController.setPower(!model.powered)
-                        }
-                        QQC2.ToolTip.text: model.powered ? i18n("Power off") : i18n("Power on")
-                        QQC2.ToolTip.visible: hovered
-                    }
-
-                    QQC2.Slider {
-                        Layout.preferredWidth: Kirigami.Units.gridUnit * 8
-                        from: 0
-                        to: 100
-                        value: model.volumeLevel
-                        enabled: model.available
-                        onMoved: {
-                            PlayerController.currentPlayerId = model.playerId
-                            PlayerController.setVolume(Math.round(value))
-                        }
-                    }
-
-                    QQC2.Label {
-                        text: model.volumeLevel + "%"
-                        font.pointSize: Kirigami.Theme.smallFont.pointSize
-                        Layout.preferredWidth: Kirigami.Units.gridUnit * 2
-                    }
-                }
-
-                onClicked: {
-                    PlayerController.currentPlayerId = model.playerId
-                }
+                PlayerController.currentPlayerId = model.playerId
+                console.log("Selected player:", model.playerId, model.name)
             }
         }
 
         Kirigami.PlaceholderMessage {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            visible: PlayerModel.count === 0
-            text: i18n("No remote players found")
-            explanation: i18n("Make sure Music Assistant server has players configured")
+            anchors.centerIn: parent
+            visible: playerListView.count === 0
+            text: i18n("No players found")
+            explanation: i18n("Make sure Music Assistant server has players configured and they are powered on")
             icon.name: "speaker"
         }
     }
