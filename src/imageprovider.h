@@ -11,6 +11,7 @@ class MaImageResponse : public QQuickImageResponse
 
 public:
     MaImageResponse(const QString &url, const QSize &requestedSize,
+                    QNetworkAccessManager *nam,
                     const QString &authToken = {}, const QString &directUrl = {});
 
     QQuickTextureFactory *textureFactory() const override;
@@ -20,11 +21,11 @@ private Q_SLOTS:
     void onFinished();
 
 private:
-    QNetworkAccessManager m_nam;
+    QNetworkAccessManager *m_nam;  // borrowed, not owned
     QImage m_image;
     QString m_error;
     QSize m_requestedSize;
-    QString m_directUrl;  // fallback URL if proxy fails
+    QString m_directUrl;
 };
 
 class MaImageProvider : public QQuickAsyncImageProvider
@@ -36,4 +37,5 @@ public:
 
 private:
     MaClient *m_client;
+    QNetworkAccessManager *m_nam;  // created on main thread
 };

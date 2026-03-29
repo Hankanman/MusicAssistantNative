@@ -5,8 +5,10 @@
 #include <QUrl>
 
 MaImageResponse::MaImageResponse(const QString &imageUrl, const QSize &requestedSize,
+                                 QNetworkAccessManager *nam,
                                  const QString &authToken, const QString &directUrl)
-    : m_requestedSize(requestedSize)
+    : m_nam(nam)
+    , m_requestedSize(requestedSize)
     , m_directUrl(directUrl)
 {
     if (imageUrl.isEmpty()) {
@@ -21,7 +23,7 @@ MaImageResponse::MaImageResponse(const QString &imageUrl, const QSize &requested
         req.setRawHeader("Authorization",
                          QStringLiteral("Bearer %1").arg(authToken).toUtf8());
     }
-    auto *reply = m_nam.get(req);
+    auto *reply = m_nam->get(req);
     connect(reply, &QNetworkReply::finished, this, &MaImageResponse::onFinished);
 }
 
@@ -50,10 +52,10 @@ void MaImageResponse::onFinished()
         // If proxy failed and we have a direct URL, try that instead
         if (!m_directUrl.isEmpty()) {
             QString fallback = m_directUrl;
-            m_directUrl.clear(); // prevent infinite loop
+            m_directUrl.clear();
             QNetworkRequest req;
             req.setUrl(QUrl(fallback));
-            auto *retryReply = m_nam.get(req);
+            auto *retryReply = m_nam->get(req);
             connect(retryReply, &QNetworkReply::finished, this, &MaImageResponse::onFinished);
             return;
         }
@@ -66,13 +68,12 @@ void MaImageResponse::onFinished()
     m_image = QImage::fromData(data);
 
     if (m_image.isNull()) {
-        // Maybe proxy returned an error page, try direct URL
         if (!m_directUrl.isEmpty()) {
             QString fallback = m_directUrl;
             m_directUrl.clear();
             QNetworkRequest req;
             req.setUrl(QUrl(fallback));
-            auto *retryReply = m_nam.get(req);
+            auto *retryReply = m_nam->get(req);
             connect(retryReply, &QNetworkReply::finished, this, &MaImageResponse::onFinished);
             return;
         }
@@ -90,6 +91,7 @@ void MaImageResponse::onFinished()
 
 MaImageProvider::MaImageProvider(MaClient *client)
     : m_client(client)
+    , m_nam(new QNetworkAccessManager())  // lives on main thread
 {
 }
 
@@ -101,17 +103,16 @@ QQuickImageResponse *MaImageProvider::requestImageResponse(const QString &id, co
     QString provider = parts.value(1);
 
     if (path.isEmpty()) {
-        return new MaImageResponse(QString(), requestedSize);
+        return new MaImageResponse(QString(), requestedSize, m_nam);
     }
 
     int size = requestedSize.isValid() ? qMax(requestedSize.width(), requestedSize.height()) : 300;
     QString proxyUrl = m_client->getImageUrl(path, provider, size);
 
-    // If path is a remote URL, pass it as fallback in case proxy 404s
     QString directUrl;
     if (path.startsWith(QStringLiteral("http://")) || path.startsWith(QStringLiteral("https://"))) {
         directUrl = path;
     }
 
-    return new MaImageResponse(proxyUrl, requestedSize, m_client->token(), directUrl);
+    return new MaImageResponse(proxyUrl, requestedSize, m_nam, m_client->token(), directUrl);
 }

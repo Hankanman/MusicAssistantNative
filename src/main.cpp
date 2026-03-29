@@ -19,8 +19,30 @@
 #include "imageprovider.h"
 #include "localplayer.h"
 
+// Suppress noisy Qt warnings that aren't actionable
+static void messageFilter(QtMsgType type, const QMessageLogContext &ctx, const QString &msg)
+{
+    // Portal registration fails when running uninstalled — not a real problem
+    if (msg.contains(QStringLiteral("Could not register app ID")))
+        return;
+    // FFmpeg backend info
+    if (msg.contains(QStringLiteral("Using Qt multimedia with FFmpeg")))
+        return;
+
+    // Default handler for everything else
+    switch (type) {
+    case QtDebugMsg: fprintf(stderr, "%s\n", qPrintable(msg)); break;
+    case QtInfoMsg: fprintf(stderr, "%s\n", qPrintable(msg)); break;
+    case QtWarningMsg: fprintf(stderr, "Warning: %s\n", qPrintable(msg)); break;
+    case QtCriticalMsg: fprintf(stderr, "Critical: %s\n", qPrintable(msg)); break;
+    case QtFatalMsg: fprintf(stderr, "Fatal: %s\n", qPrintable(msg)); abort();
+    }
+}
+
 int main(int argc, char *argv[])
 {
+    qInstallMessageHandler(messageFilter);
+
     QApplication app(argc, argv);
 
     if (qEnvironmentVariableIsEmpty("QT_QUICK_CONTROLS_STYLE")) {
