@@ -10,6 +10,7 @@ Build-Depends:
  qt6-base-dev (>= 6.6),
  qt6-declarative-dev (>= 6.6),
  qt6-websockets-dev (>= 6.6),
+ qt6-multimedia-dev (>= 6.6),
  libkirigami-dev (>= 6.0),
  libkf6i18n-dev (>= 6.0),
  libkf6coreaddons-dev (>= 6.0),
