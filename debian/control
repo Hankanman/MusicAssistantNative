@@ -1,0 +1,39 @@
+Source: musicassistant-native
+Section: sound
+Priority: optional
+Maintainer: Sebastian Burrell <sebburrell@outlook.com>
+Build-Depends:
+ debhelper-compat (= 13),
+ cmake (>= 3.20),
+ extra-cmake-modules (>= 6.0),
+ g++ (>= 10),
+ qt6-base-dev (>= 6.6),
+ qt6-declarative-dev (>= 6.6),
+ qt6-websockets-dev (>= 6.6),
+ libkf6kirigami-dev (>= 6.0),
+ libkf6i18n-dev (>= 6.0),
+ libkf6coreaddons-dev (>= 6.0),
+ libkf6config-dev (>= 6.0),
+ libkf6dbusaddons-dev (>= 6.0),
+ libkf6notifications-dev (>= 6.0),
+ libkf6windowsystem-dev (>= 6.0),
+ libkf6iconthemes-dev (>= 6.0),
+Standards-Version: 4.6.2
+Homepage: https://github.com/music-assistant
+Rules-Requires-Root: no
+
+Package: musicassistant-native
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends},
+ qml6-module-org-kde-kirigami,
+ qt6-websockets-dev,
+ qt6-declarative-dev,
+Description: Native Linux desktop client for Music Assistant
+ Music Assistant Native is a desktop application for controlling
+ Music Assistant, the open-source music library manager from the
+ Home Assistant ecosystem.
+ .
+ Connect to your Music Assistant server and browse your unified
+ music library, control playback on any connected speaker (Sonos,
+ AirPlay, Chromecast, DLNA, Snapcast, etc.), and manage your play
+ queue with a native Qt/Kirigami interface.

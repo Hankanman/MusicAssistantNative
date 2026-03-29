@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component type="desktop-application">
+  <id>io.github.musicassistant.native</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <name>Music Assistant Native</name>
+  <summary>A native KDE client for Music Assistant</summary>
+  <description>
+    <p>
+      Music Assistant Native is a native desktop client for Music Assistant,
+      the open-source music library manager. It connects to your Music Assistant
+      server over WebSocket and provides a Plasma-native interface for browsing
+      your music library, controlling playback on any connected speaker, and
+      managing your play queue.
+    </p>
+    <p>Features:</p>
+    <ul>
+      <li>Browse your unified music library (artists, albums, tracks, playlists, radios)</li>
+      <li>Control playback on any Music Assistant player (Sonos, AirPlay, Chromecast, etc.)</li>
+      <li>Manage the play queue with shuffle, repeat, and drag-to-reorder</li>
+      <li>View now playing with album art and seek controls</li>
+      <li>Native KDE Plasma integration with Kirigami UI</li>
+    </ul>
+  </description>
+  <url type="homepage">https://github.com/music-assistant</url>
+  <launchable type="desktop-id">io.github.musicassistant.native.desktop</launchable>
+  <provides>
+    <binary>musicassistant-native</binary>
+  </provides>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="0.1.0" date="2026-03-29">
+      <description>
+        <p>Initial release</p>
+      </description>
+    </release>
+  </releases>
+</component>

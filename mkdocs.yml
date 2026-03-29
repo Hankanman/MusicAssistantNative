@@ -1,0 +1,90 @@
+site_name: Music Assistant Native
+site_description: A native KDE Plasma desktop client for Music Assistant
+site_url: https://Hankanman.github.io/MusicAssistantNative
+repo_url: https://github.com/Hankanman/MusicAssistantNative
+repo_name: MusicAssistantNative
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: blue
+      accent: light blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: blue
+      accent: light blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.tabs.link
+    - toc.follow
+  icon:
+    repo: fontawesome/brands/github
+    logo: material/music-circle
+  font:
+    text: Inter
+    code: JetBrains Mono
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.mark
+  - pymdownx.keys
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/Hankanman/MusicAssistantNative
+
+nav:
+  - Home: index.md
+  - User Guide:
+      - Getting Started: user/getting-started.md
+      - Connecting to Music Assistant: user/connecting.md
+      - Browsing Your Library: user/library.md
+      - Controlling Playback: user/playback.md
+      - Managing the Queue: user/queue.md
+      - Managing Players: user/players.md
+      - Troubleshooting: user/troubleshooting.md
+  - Developer Guide:
+      - Architecture: developer/architecture.md
+      - Building from Source: developer/building.md
+      - Music Assistant API: developer/api.md
+      - C++ Backend: developer/backend.md
+      - QML Frontend: developer/frontend.md
+      - Testing: developer/testing.md
+      - RPM Packaging: developer/packaging.md
+      - Contributing: developer/contributing.md

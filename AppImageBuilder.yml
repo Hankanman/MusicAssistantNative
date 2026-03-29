@@ -1,0 +1,45 @@
+version: 1
+script:
+  - cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
+  - cmake --build build -j$(nproc)
+  - DESTDIR=$TARGET_APPDIR cmake --install build
+
+AppDir:
+  path: ./AppDir
+  app_info:
+    id: io.github.musicassistant.native
+    name: Music Assistant Native
+    icon: musicassistant-native
+    version: 0.1.0
+    exec: usr/bin/musicassistant-native
+    exec_args: $@
+
+  apt:
+    arch: amd64
+    sources:
+      - sourceline: deb http://archive.ubuntu.com/ubuntu noble main universe
+        key_url: https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x871920D1991BC93C
+
+    include:
+      - qt6-base-dev
+      - qt6-declarative-dev
+      - qt6-websockets-dev
+      - libkf6kirigami-dev
+      - libkf6i18n-dev
+      - libkf6coreaddons-dev
+      - libkf6config-dev
+      - libkf6dbusaddons-dev
+      - libkf6notifications-dev
+      - libkf6windowsystem-dev
+      - libkf6iconthemes-dev
+      - qml6-module-org-kde-kirigami
+      - qml6-module-qtquick-controls
+      - qml6-module-qtquick-layouts
+
+  runtime:
+    env:
+      QT_QUICK_CONTROLS_STYLE: org.kde.desktop
+
+AppImage:
+  arch: x86_64
+  update-information: guess

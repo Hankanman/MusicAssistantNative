@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3daee9"/>
+      <stop offset="100%" stop-color="#2980b9"/>
+    </linearGradient>
+  </defs>
+  <rect width="48" height="48" rx="8" fill="url(#bg)"/>
+  <!-- Music note -->
+  <path d="M 18 12 L 18 30 C 16.5 29 14 29.5 13 31 C 11.5 33 13 35.5 15.5 36 C 18 36.5 20 35 20 33 L 20 18 L 32 15 L 32 27 C 30.5 26 28 26.5 27 28 C 25.5 30 27 32.5 29.5 33 C 32 33.5 34 32 34 30 L 34 12 Z"
+        fill="white" fill-opacity="0.95"/>
+  <!-- WiFi waves for "assistant/connected" -->
+  <path d="M 36 8 C 38 10 39 12.5 39 15" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-opacity="0.6"/>
+  <path d="M 38 6 C 41 9 42.5 13 42.5 17" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-opacity="0.4"/>
+</svg>

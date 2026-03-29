@@ -1,0 +1,147 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: API Tests (Mock Server)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test dependencies
+        run: pip install -r tests/requirements.txt
+
+      - name: Run tests
+        working-directory: tests
+        run: pytest -v --tb=short
+
+  build-rpm:
+    name: Build RPM (Fedora)
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:43
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          dnf install -y cmake extra-cmake-modules gcc-c++ \
+            qt6-qtbase-devel qt6-qtdeclarative-devel \
+            qt6-qtwebsockets-devel kf6-kirigami-devel \
+            kf6-ki18n-devel kf6-kcoreaddons-devel kf6-kconfig-devel \
+            kf6-kdbusaddons-devel kf6-knotifications-devel \
+            kf6-kwindowsystem-devel kf6-kiconthemes-devel \
+            desktop-file-utils rpm-build
+
+      - name: Configure and build
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
+          cmake --build build -j$(nproc)
+
+      - name: Validate desktop file
+        run: desktop-file-validate io.github.musicassistant.native.desktop
+
+      - name: Build RPM
+        run: |
+          mkdir -p ~/rpmbuild/{SOURCES,SPECS}
+          tar --transform 's,^\.,musicassistant-native-0.1.0,' \
+            --exclude='build' --exclude='.git' --exclude='*.rpm' \
+            -czf ~/rpmbuild/SOURCES/musicassistant-native-0.1.0.tar.gz .
+          cp musicassistant-native.spec ~/rpmbuild/SPECS/
+          rpmbuild -bb ~/rpmbuild/SPECS/musicassistant-native.spec
+
+      - name: Upload RPM
+        uses: actions/upload-artifact@v4
+        with:
+          name: musicassistant-native-rpm
+          path: ~/rpmbuild/RPMS/**/*.rpm
+
+  build-deb:
+    name: Build DEB (Ubuntu/Debian)
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:24.10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            cmake extra-cmake-modules g++ \
+            qt6-base-dev qt6-declarative-dev \
+            qt6-websockets-dev \
+            libkf6kirigami-dev libkf6i18n-dev libkf6coreaddons-dev \
+            libkf6config-dev libkf6dbusaddons-dev libkf6notifications-dev \
+            libkf6windowsystem-dev libkf6iconthemes-dev \
+            dpkg-dev debhelper fakeroot
+
+      - name: Build DEB
+        run: |
+          dpkg-buildpackage -us -uc -b
+
+      - name: Upload DEB
+        uses: actions/upload-artifact@v4
+        with:
+          name: musicassistant-native-deb
+          path: ../*.deb
+
+  build-appimage:
+    name: Build AppImage
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            cmake extra-cmake-modules g++ \
+            qt6-base-dev qt6-declarative-dev \
+            qt6-websockets-dev \
+            libkf6kirigami-dev libkf6i18n-dev libkf6coreaddons-dev \
+            libkf6config-dev libkf6dbusaddons-dev libkf6notifications-dev \
+            libkf6windowsystem-dev libkf6iconthemes-dev \
+            qml6-module-org-kde-kirigami \
+            qml6-module-qtquick-controls qml6-module-qtquick-layouts \
+            wget fuse libfuse2
+
+      - name: Build
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
+          cmake --build build -j$(nproc)
+          DESTDIR=AppDir cmake --install build
+
+      - name: Download linuxdeploy
+        run: |
+          wget -q "https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage"
+          wget -q "https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage"
+          chmod +x linuxdeploy*.AppImage
+
+      - name: Create AppImage
+        env:
+          QMAKE: qmake6
+          QML_SOURCES_PATHS: src/qml
+          VERSION: "0.1.0"
+        run: |
+          ./linuxdeploy-x86_64.AppImage \
+            --appdir AppDir \
+            --desktop-file AppDir/usr/share/applications/io.github.musicassistant.native.desktop \
+            --icon-file AppDir/usr/share/icons/hicolor/scalable/apps/musicassistant-native.svg \
+            --plugin qt \
+            --output appimage
+
+      - name: Upload AppImage
+        uses: actions/upload-artifact@v4
+        with:
+          name: musicassistant-native-appimage
+          path: ./*.AppImage

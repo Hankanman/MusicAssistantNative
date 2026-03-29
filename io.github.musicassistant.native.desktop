@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Music Assistant Native
+GenericName=Music Assistant Client
+Comment=A native KDE client for Music Assistant
+Exec=musicassistant-native
+Icon=multimedia-player
+Terminal=false
+Categories=Audio;Music;Player;Qt;KDE;
+Keywords=music;player;assistant;streaming;
+StartupNotify=true
