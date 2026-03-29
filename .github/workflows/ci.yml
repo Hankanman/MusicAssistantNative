@@ -40,7 +40,7 @@ jobs:
             kf6-ki18n-devel kf6-kcoreaddons-devel kf6-kconfig-devel \
             kf6-kdbusaddons-devel kf6-knotifications-devel \
             kf6-kwindowsystem-devel kf6-kiconthemes-devel \
-            desktop-file-utils rpm-build
+            desktop-file-utils libappstream-glib rpm-build
 
       - name: Configure and build
         run: |
@@ -69,7 +69,7 @@ jobs:
     name: Build DEB (Ubuntu/Debian)
     runs-on: ubuntu-latest
     container:
-      image: ubuntu:24.10
+      image: ubuntu:25.04
     steps:
       - uses: actions/checkout@v4
 
@@ -97,14 +97,16 @@ jobs:
 
   build-appimage:
     name: Build AppImage
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:25.04
     steps:
       - uses: actions/checkout@v4
 
       - name: Install build dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
+          apt-get update
+          apt-get install -y --no-install-recommends \
             cmake extra-cmake-modules g++ \
             qt6-base-dev qt6-declarative-dev \
             qt6-websockets-dev \
@@ -113,9 +115,9 @@ jobs:
             libkf6windowsystem-dev libkf6iconthemes-dev \
             qml6-module-org-kde-kirigami \
             qml6-module-qtquick-controls qml6-module-qtquick-layouts \
-            wget fuse libfuse2
+            wget file patchelf
 
-      - name: Build
+      - name: Build and install to AppDir
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
           cmake --build build -j$(nproc)
@@ -132,6 +134,7 @@ jobs:
           QMAKE: qmake6
           QML_SOURCES_PATHS: src/qml
           VERSION: "0.1.0"
+          APPIMAGE_EXTRACT_AND_RUN: "1"
         run: |
           ./linuxdeploy-x86_64.AppImage \
             --appdir AppDir \
