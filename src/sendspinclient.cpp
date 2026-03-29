@@ -1,4 +1,5 @@
 #include "sendspinclient.h"
+#include "audiodecoder.h"
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QUuid>
@@ -9,9 +10,9 @@
 
 SendspinClient::SendspinClient(QObject *parent)
     : QObject(parent)
-    , m_audioOutput(new QAudioOutput(this))
+    , m_audioDecoder(new AudioDecoder(this))
 {
-    m_audioOutput->setVolume(0.8);
+    m_audioDecoder->setVolume(0.8f);
 
     // Generate or load persistent player ID
     QSettings settings;
@@ -52,7 +53,7 @@ int SendspinClient::volume() const { return m_volume; }
 void SendspinClient::setVolume(int vol)
 {
     m_volume = qBound(0, vol, 100);
-    m_audioOutput->setVolume(m_volume / 100.0);
+    m_audioDecoder->setVolume(m_volume / 100.0f);
     Q_EMIT volumeChanged();
     sendState();
 }
@@ -61,7 +62,7 @@ bool SendspinClient::muted() const { return m_muted; }
 void SendspinClient::setMuted(bool m)
 {
     m_muted = m;
-    m_audioOutput->setMuted(m);
+    m_audioDecoder->setVolume(m ? 0.0f : m_volume / 100.0f);
     Q_EMIT mutedChanged();
     sendState();
 }
@@ -220,7 +221,8 @@ void SendspinClient::onBinaryMessageReceived(const QByteArray &data)
         Q_EMIT playingChanged();
     }
 
-    // TODO: Decode FLAC audio from bytes 9+ and feed to QAudioSink
+    // Feed encoded audio (bytes 9+) to the decoder
+    m_audioDecoder->feedData(data.mid(9));
 }
 
 void SendspinClient::onWsError(QAbstractSocket::SocketError error)
@@ -350,11 +352,11 @@ void SendspinClient::handleServerCommand(const QJsonObject &payload)
 
     if (cmd == QStringLiteral("volume")) {
         m_volume = playerCmd.value(QStringLiteral("volume")).toInt(m_volume);
-        m_audioOutput->setVolume(m_volume / 100.0);
+        m_audioDecoder->setVolume(m_volume / 100.0f);
         Q_EMIT volumeChanged();
     } else if (cmd == QStringLiteral("mute")) {
         m_muted = playerCmd.value(QStringLiteral("muted")).toBool(m_muted);
-        m_audioOutput->setMuted(m_muted);
+        m_audioDecoder->setVolume(m_muted ? 0.0f : m_volume / 100.0f);
         Q_EMIT mutedChanged();
     }
 }
@@ -373,15 +375,17 @@ void SendspinClient::handleStreamStart(const QJsonObject &payload)
     m_playing = true;
     Q_EMIT playingChanged();
 
-    // Immediately confirm we're ready to receive audio
-    sendState();
+    // Start audio decoder pipeline
+    m_audioDecoder->start(m_currentCodec, m_sampleRate, m_channels, 16);
 
-    qDebug() << "SendspinClient: confirmed synchronized state for stream";
+    sendState();
+    qDebug() << "SendspinClient: audio pipeline started";
 }
 
 void SendspinClient::handleStreamEnd()
 {
-    qDebug() << "SendspinClient: stream ended";
+    qDebug() << "SendspinClient: stream ended (" << m_binFrameCount << "frames received)";
+    m_audioDecoder->stop();
     m_playing = false;
     Q_EMIT playingChanged();
     sendState();
@@ -390,6 +394,7 @@ void SendspinClient::handleStreamEnd()
 void SendspinClient::handleStreamClear()
 {
     qDebug() << "SendspinClient: stream cleared (skip/seek)";
+    m_audioDecoder->stop();
 }
 
 void SendspinClient::handleTimeResponse(const QJsonObject &payload)

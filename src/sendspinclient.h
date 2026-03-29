@@ -3,12 +3,11 @@
 #include <QObject>
 #include <QWebSocket>
 #include <QTimer>
-#include <QMediaPlayer>
-#include <QAudioOutput>
 #include <QBuffer>
 #include <QJsonObject>
 
 class MaClient;
+class AudioDecoder;
 
 class SendspinClient : public QObject
 {
@@ -77,7 +76,7 @@ private:
 
     // Audio playback
     int m_binFrameCount = 0;
-    QAudioOutput *m_audioOutput;
+    AudioDecoder *m_audioDecoder;
     QString m_currentCodec;
     int m_sampleRate = 48000;
     int m_channels = 2;
