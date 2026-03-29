@@ -27,22 +27,22 @@ Kirigami.ApplicationWindow {
             Kirigami.Action {
                 text: i18n("Now Playing")
                 icon.name: "media-playback-start"
-                onTriggered: pageStack.replace("qrc:/io/github/musicassistant/native/qml/NowPlayingPage.qml")
+                onTriggered: root.switchPage(nowPlayingPage)
             },
             Kirigami.Action {
                 text: i18n("Library")
                 icon.name: "view-media-playlist"
-                onTriggered: pageStack.replace("qrc:/io/github/musicassistant/native/qml/LibraryPage.qml")
+                onTriggered: root.switchPage(libraryPage)
             },
             Kirigami.Action {
                 text: i18n("Queue")
                 icon.name: "amarok_playlist"
-                onTriggered: pageStack.replace("qrc:/io/github/musicassistant/native/qml/QueuePage.qml")
+                onTriggered: root.switchPage(queuePage)
             },
             Kirigami.Action {
                 text: i18n("Players")
                 icon.name: "speaker"
-                onTriggered: pageStack.replace("qrc:/io/github/musicassistant/native/qml/PlayersPage.qml")
+                onTriggered: root.switchPage(playersPage)
             },
             Kirigami.Action {
                 separator: true
@@ -50,7 +50,7 @@ Kirigami.ApplicationWindow {
             Kirigami.Action {
                 text: i18n("Settings")
                 icon.name: "settings-configure"
-                onTriggered: pageStack.replace("qrc:/io/github/musicassistant/native/qml/SettingsPage.qml")
+                onTriggered: root.switchPage(settingsPage)
             }
         ]
 
@@ -74,7 +74,21 @@ Kirigami.ApplicationWindow {
         }
     }
 
-    pageStack.initialPage: "qrc:/io/github/musicassistant/native/qml/SettingsPage.qml"
+    // Pre-created page instances — avoids "not placed in graphics scene" warnings
+    NowPlayingPage { id: nowPlayingPage; visible: false }
+    LibraryPage { id: libraryPage; visible: false }
+    QueuePage { id: queuePage; visible: false }
+    PlayersPage { id: playersPage; visible: false }
+    SettingsPage { id: settingsPage; visible: false }
+
+    pageStack.initialPage: settingsPage
+
+    function switchPage(page) {
+        if (pageStack.currentItem !== page) {
+            pageStack.clear()
+            pageStack.push(page)
+        }
+    }
 
     // Give pageStack bottom margin so content isn't hidden behind player bar
     pageStack.anchors.bottomMargin: root.showPlayerBar ? playerBar.height : 0
