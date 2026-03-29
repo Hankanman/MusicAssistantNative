@@ -36,6 +36,10 @@ public:
     Q_INVOKABLE void disconnect();
     Q_INVOKABLE void authenticate(const QString &token);
     Q_INVOKABLE void loginWithCredentials(const QString &username, const QString &password);
+    Q_INVOKABLE void saveSettings();
+    Q_INVOKABLE void loadSettings();
+    Q_INVOKABLE bool hasSavedSettings() const;
+    Q_INVOKABLE void connectWithSavedSettings();
 
     QString sendCommand(const QString &command, const QJsonObject &args = {}, ResponseCallback callback = nullptr);
 

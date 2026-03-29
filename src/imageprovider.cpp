@@ -67,8 +67,10 @@ MaImageProvider::MaImageProvider(MaClient *client)
 
 QQuickImageResponse *MaImageProvider::requestImageResponse(const QString &id, const QSize &requestedSize)
 {
-    // id format: "path|provider" from MediaItemModel::extractImageUrl
-    auto parts = id.split(QLatin1Char('|'));
+    // id comes URL-decoded from QML Image element, but may still have %7C for |
+    QString decoded = QUrl::fromPercentEncoding(id.toUtf8());
+    // Format: "path|provider" from MediaItemModel::extractImageUrl
+    auto parts = decoded.split(QLatin1Char('|'));
     QString path = parts.value(0);
     QString provider = parts.value(1);
     QString url;

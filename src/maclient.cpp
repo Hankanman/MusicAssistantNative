@@ -1,6 +1,7 @@
 #include "maclient.h"
 #include <QUuid>
 #include <QDebug>
+#include <QSettings>
 
 MaClient::MaClient(QObject *parent)
     : QObject(parent)
@@ -169,6 +170,44 @@ QString MaClient::getImageUrl(const QString &path, const QString &provider, int 
     if (size > 0)
         url += QStringLiteral("&size=") + QString::number(size);
     return url;
+}
+
+void MaClient::saveSettings()
+{
+    QSettings settings;
+    settings.beginGroup(QStringLiteral("Connection"));
+    settings.setValue(QStringLiteral("serverUrl"), m_serverUrl);
+    settings.setValue(QStringLiteral("token"), m_token);
+    settings.endGroup();
+    settings.sync();
+    qDebug() << "MaClient: settings saved";
+}
+
+void MaClient::loadSettings()
+{
+    QSettings settings;
+    settings.beginGroup(QStringLiteral("Connection"));
+    m_serverUrl = settings.value(QStringLiteral("serverUrl")).toString();
+    m_token = settings.value(QStringLiteral("token")).toString();
+    settings.endGroup();
+    Q_EMIT serverUrlChanged();
+}
+
+bool MaClient::hasSavedSettings() const
+{
+    QSettings settings;
+    settings.beginGroup(QStringLiteral("Connection"));
+    return !settings.value(QStringLiteral("serverUrl")).toString().isEmpty()
+        && !settings.value(QStringLiteral("token")).toString().isEmpty();
+}
+
+void MaClient::connectWithSavedSettings()
+{
+    loadSettings();
+    if (!m_serverUrl.isEmpty() && !m_token.isEmpty()) {
+        qDebug() << "MaClient: auto-connecting with saved settings to" << m_serverUrl;
+        connectToServer(m_serverUrl);
+    }
 }
 
 void MaClient::onConnected()

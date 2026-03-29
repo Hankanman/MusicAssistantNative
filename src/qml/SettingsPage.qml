@@ -143,7 +143,20 @@ Kirigami.Page {
         function onAuthenticatedChanged() {
             if (MaClient.authenticated) {
                 errorMessage.visible = false
+                // Save credentials on successful auth
+                MaClient.saveSettings()
             }
+        }
+    }
+
+    Component.onCompleted: {
+        // Load saved settings into the form
+        MaClient.loadSettings()
+        serverUrlField.text = MaClient.serverUrl || ""
+
+        // Auto-connect if we have saved credentials
+        if (MaClient.hasSavedSettings()) {
+            MaClient.connectWithSavedSettings()
         }
     }
 }
