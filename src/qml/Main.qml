@@ -16,7 +16,7 @@ Kirigami.ApplicationWindow {
 
     globalDrawer: Kirigami.GlobalDrawer {
         title: i18n("Music Assistant")
-        titleIcon: "multimedia-player"
+        titleIcon: "musicassistant-native"
         isMenu: false
         modal: Kirigami.Settings.isMobile
         collapsible: true
@@ -26,34 +26,22 @@ Kirigami.ApplicationWindow {
             Kirigami.Action {
                 text: i18n("Now Playing")
                 icon.name: "media-playback-start"
-                onTriggered: {
-                    while (pageStack.depth > 1) pageStack.pop()
-                    pageStack.replace(nowPlayingComponent)
-                }
+                onTriggered: pageStack.replace("qrc:/io/github/musicassistant/native/qml/NowPlayingPage.qml")
             },
             Kirigami.Action {
                 text: i18n("Library")
                 icon.name: "view-media-playlist"
-                onTriggered: {
-                    while (pageStack.depth > 1) pageStack.pop()
-                    pageStack.replace(libraryComponent)
-                }
+                onTriggered: pageStack.replace("qrc:/io/github/musicassistant/native/qml/LibraryPage.qml")
             },
             Kirigami.Action {
                 text: i18n("Queue")
                 icon.name: "amarok_playlist"
-                onTriggered: {
-                    while (pageStack.depth > 1) pageStack.pop()
-                    pageStack.replace(queueComponent)
-                }
+                onTriggered: pageStack.replace("qrc:/io/github/musicassistant/native/qml/QueuePage.qml")
             },
             Kirigami.Action {
                 text: i18n("Players")
                 icon.name: "speaker"
-                onTriggered: {
-                    while (pageStack.depth > 1) pageStack.pop()
-                    pageStack.replace(playersComponent)
-                }
+                onTriggered: pageStack.replace("qrc:/io/github/musicassistant/native/qml/PlayersPage.qml")
             },
             Kirigami.Action {
                 separator: true
@@ -61,10 +49,7 @@ Kirigami.ApplicationWindow {
             Kirigami.Action {
                 text: i18n("Settings")
                 icon.name: "settings-configure"
-                onTriggered: {
-                    while (pageStack.depth > 1) pageStack.pop()
-                    pageStack.replace(settingsComponent)
-                }
+                onTriggered: pageStack.replace("qrc:/io/github/musicassistant/native/qml/SettingsPage.qml")
             }
         ]
 
@@ -80,7 +65,7 @@ Kirigami.ApplicationWindow {
                 color: root.isConnected ? Kirigami.Theme.positiveTextColor : Kirigami.Theme.disabledTextColor
             }
             QQC2.Label {
-                text: root.isConnected ? MaClient.serverName : i18n("Not connected")
+                text: root.isConnected ? (MaClient.serverName || i18n("Connected")) : i18n("Not connected")
                 Layout.alignment: Qt.AlignHCenter
                 font.pointSize: Kirigami.Theme.smallFont.pointSize
                 color: root.isConnected ? Kirigami.Theme.textColor : Kirigami.Theme.disabledTextColor
@@ -88,12 +73,19 @@ Kirigami.ApplicationWindow {
         }
     }
 
-    pageStack.initialPage: settingsComponent
+    // Add bottom margin to pageStack so content doesn't go behind player bar
+    pageStack.initialPage: "qrc:/io/github/musicassistant/native/qml/SettingsPage.qml"
 
-    // Bottom player bar
-    footer: QQC2.ToolBar {
+    // Persistent bottom player bar — positioned at window level, spans full width
+    QQC2.ToolBar {
+        id: playerBar
         visible: root.isConnected && PlayerController.currentPlayerId !== ""
-        height: visible ? implicitHeight : 0
+        z: 999
+
+        parent: root.overlay
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
 
         RowLayout {
             anchors.fill: parent
@@ -162,14 +154,11 @@ Kirigami.ApplicationWindow {
             }
 
             // Volume
-            Kirigami.Icon {
-                source: PlayerController.volumeMuted ? "audio-volume-muted" : "audio-volume-high"
-                implicitWidth: Kirigami.Units.iconSizes.small
-                implicitHeight: Kirigami.Units.iconSizes.small
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: PlayerController.toggleMute()
-                }
+            QQC2.ToolButton {
+                icon.name: PlayerController.volumeMuted ? "audio-volume-muted" : "audio-volume-high"
+                onClicked: PlayerController.toggleMute()
+                QQC2.ToolTip.text: i18n("Mute")
+                QQC2.ToolTip.visible: hovered
             }
             QQC2.Slider {
                 Layout.preferredWidth: Kirigami.Units.gridUnit * 6
@@ -179,30 +168,5 @@ Kirigami.ApplicationWindow {
                 onMoved: PlayerController.setVolume(Math.round(value))
             }
         }
-    }
-
-    Component {
-        id: nowPlayingComponent
-        NowPlayingPage {}
-    }
-
-    Component {
-        id: libraryComponent
-        LibraryPage {}
-    }
-
-    Component {
-        id: queueComponent
-        QueuePage {}
-    }
-
-    Component {
-        id: playersComponent
-        PlayersPage {}
-    }
-
-    Component {
-        id: settingsComponent
-        SettingsPage {}
     }
 }
