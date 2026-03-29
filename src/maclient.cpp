@@ -275,7 +275,7 @@ void MaClient::onError(QAbstractSocket::SocketError error)
 void MaClient::sendHeartbeat()
 {
     if (m_connected) {
-        m_socket.sendTextMessage(QStringLiteral("{\"message_id\":\"ping\",\"command\":\"ping\"}"));
+        m_socket.ping();
     }
 }
 

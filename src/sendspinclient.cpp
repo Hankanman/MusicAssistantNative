@@ -72,6 +72,8 @@ void SendspinClient::connectToServer(const QString &serverUrl, const QString &to
 {
     m_token = token;
 
+    m_lastServerUrl = serverUrl;
+
     // Connect directly to Sendspin server on port 8927 (no auth needed)
     QUrl serverQUrl(serverUrl);
     QString wsUrl = QStringLiteral("ws://%1:8927/sendspin").arg(serverQUrl.host());
@@ -117,6 +119,7 @@ void SendspinClient::onDisconnected()
     m_stateTimer.stop();
     m_timeTimer.stop();
     m_authenticated = false;
+    bool wasRegistered = m_registered;
     if (m_registered) {
         m_registered = false;
         Q_EMIT registeredChanged();
@@ -124,6 +127,16 @@ void SendspinClient::onDisconnected()
     if (m_playing) {
         m_playing = false;
         Q_EMIT playingChanged();
+    }
+
+    // Auto-reconnect after 3 seconds if we were previously registered
+    if (wasRegistered && !m_lastServerUrl.isEmpty()) {
+        qDebug() << "SendspinClient: will reconnect in 3s...";
+        QTimer::singleShot(3000, this, [this]() {
+            if (!m_registered) {
+                connectToServer(m_lastServerUrl, m_token);
+            }
+        });
     }
 }
 
@@ -274,6 +287,10 @@ void SendspinClient::sendHello()
 
     qDebug() << "SendspinClient: sending hello as" << m_playerName << "id:" << m_playerId;
     sendJson(hello);
+
+    // CRITICAL: Send time sync burst immediately after hello, before server timeout
+    for (int i = 0; i < 8; ++i)
+        sendTimePing();
 }
 
 void SendspinClient::sendState()

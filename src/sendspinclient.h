@@ -73,6 +73,7 @@ private:
     int m_volume = 80;
     bool m_muted = false;
     bool m_playing = false;
+    QString m_lastServerUrl;
 
     // Audio playback
     QAudioOutput *m_audioOutput;
