@@ -179,8 +179,8 @@ Kirigami.ScrollablePage {
         }
     }
 
-    Component.onCompleted: {
-        if (MaClient.authenticated) {
+    onVisibleChanged: {
+        if (visible && MaClient.authenticated) {
             PlayerModel.refresh()
         }
     }

@@ -81,7 +81,22 @@ Kirigami.ScrollablePage {
         }
     }
 
-    Component.onCompleted: loadCurrentType()
+    // Load data when page becomes visible (not on construction, since
+    // pages are pre-created before auth completes)
+    onVisibleChanged: {
+        if (visible && MaClient.authenticated && getCurrentModel().count === 0) {
+            loadCurrentType()
+        }
+    }
+
+    Connections {
+        target: MaClient
+        function onAuthenticatedChanged() {
+            if (MaClient.authenticated && visible) {
+                loadCurrentType()
+            }
+        }
+    }
 
     function getCurrentModel() {
         switch (tabBar.currentIndex) {
