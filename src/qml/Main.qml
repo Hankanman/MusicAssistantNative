@@ -83,22 +83,26 @@ Kirigami.ApplicationWindow {
 
     pageStack.initialPage: settingsPage
 
-    // Auto-select first available MA player when connected
+    // Auto-select this device (Sendspin player) when it appears in the player list
     Connections {
         target: PlayerModel
         function onCountChanged() {
             if (PlayerModel.count > 0 && PlayerController.currentPlayerId === "") {
-                // Pick first available powered player, or just first available
-                var bestId = ""
+                // Prefer our Sendspin local player (prefixed with "up" on server)
+                var localId = "up" + SendspinClient.playerId
                 for (var i = 0; i < PlayerModel.count; i++) {
                     var pid = PlayerModel.playerIdAt(i)
-                    if (pid !== "" && bestId === "") {
-                        bestId = pid
+                    if (pid === localId) {
+                        PlayerController.currentPlayerId = pid
+                        console.log("Auto-selected local player:", pid)
+                        return
                     }
                 }
-                if (bestId !== "") {
-                    PlayerController.currentPlayerId = bestId
-                    console.log("Auto-selected player:", bestId)
+                // Fallback to first available if local player not found yet
+                var firstId = PlayerModel.playerIdAt(0)
+                if (firstId !== "") {
+                    PlayerController.currentPlayerId = firstId
+                    console.log("Auto-selected fallback player:", firstId)
                 }
             }
         }
