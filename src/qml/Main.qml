@@ -51,6 +51,11 @@ Kirigami.ApplicationWindow {
                 text: i18n("Settings")
                 icon.name: "settings-configure"
                 onTriggered: root.switchPage(settingsPage)
+            },
+            Kirigami.Action {
+                text: i18n("About")
+                icon.name: "help-about"
+                onTriggered: root.switchPage(aboutPage)
             }
         ]
 
@@ -80,6 +85,7 @@ Kirigami.ApplicationWindow {
     QueuePage { id: queuePage; visible: false }
     PlayersPage { id: playersPage; visible: false }
     SettingsPage { id: settingsPage; visible: false }
+    AboutPage { id: aboutPage; visible: false }
 
     pageStack.initialPage: settingsPage
 

@@ -22,6 +22,7 @@ qt_add_qml_module(musicassistant-native
         qml/PlayersPage.qml
         qml/SettingsPage.qml
         qml/MediaItemDelegate.qml
+        qml/AboutPage.qml
 )
 
 target_link_libraries(musicassistant-native PRIVATE
