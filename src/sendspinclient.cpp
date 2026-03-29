@@ -72,15 +72,9 @@ void SendspinClient::connectToServer(const QString &serverUrl, const QString &to
 {
     m_token = token;
 
-    // Connect via the authenticated proxy at /sendspin
-    QString wsUrl = serverUrl;
-    if (wsUrl.startsWith(QStringLiteral("http://")))
-        wsUrl.replace(0, 7, QStringLiteral("ws://"));
-    else if (wsUrl.startsWith(QStringLiteral("https://")))
-        wsUrl.replace(0, 8, QStringLiteral("wss://"));
-    if (!wsUrl.endsWith(QLatin1Char('/')))
-        wsUrl += QLatin1Char('/');
-    wsUrl += QStringLiteral("sendspin");
+    // Connect directly to Sendspin server on port 8927 (no auth needed)
+    QUrl serverQUrl(serverUrl);
+    QString wsUrl = QStringLiteral("ws://%1:8927/sendspin").arg(serverQUrl.host());
 
     qDebug() << "SendspinClient: connecting to" << wsUrl;
     m_socket.open(QUrl(wsUrl));
@@ -111,14 +105,9 @@ void SendspinClient::disconnect()
 
 void SendspinClient::onConnected()
 {
-    qDebug() << "SendspinClient: WebSocket connected, sending auth...";
-
-    // First message must be auth for the proxy
-    QJsonObject auth;
-    auth[QStringLiteral("type")] = QStringLiteral("auth");
-    auth[QStringLiteral("token")] = m_token;
-    auth[QStringLiteral("client_id")] = m_playerId;
-    sendJson(auth);
+    qDebug() << "SendspinClient: WebSocket connected, sending hello directly...";
+    m_authenticated = true;
+    sendHello();
 }
 
 void SendspinClient::onDisconnected()
@@ -154,14 +143,28 @@ void SendspinClient::onTextMessageReceived(const QString &message)
         qDebug() << "SendspinClient: auth OK, sending hello...";
         m_authenticated = true;
         sendHello();
+    } else if (type == QStringLiteral("server/time")) {
+        // Must respond to time probes to stay connected
+        sendTimePing();
+        return;
+    } else if (type == QStringLiteral("group/update")) {
+        // Player group state changed — informational
+        return;
     } else if (type == QStringLiteral("server/hello")) {
-        qDebug() << "SendspinClient: registered as player" << m_playerId;
+        qDebug() << "SendspinClient: server/hello received:"
+                 << "active_roles:" << payload.value(QStringLiteral("active_roles"))
+                 << "connection_reason:" << payload.value(QStringLiteral("connection_reason")).toString()
+                 << "server_id:" << payload.value(QStringLiteral("server_id")).toString()
+                 << "version:" << payload.value(QStringLiteral("version"));
         m_registered = true;
         Q_EMIT registeredChanged();
         m_stateTimer.start();
         m_timeTimer.start();
-        sendTimePing();
+        // Send initial time sync burst (8 probes like web frontend) and state
+        for (int i = 0; i < 8; ++i)
+            sendTimePing();
         sendState();
+        qDebug() << "SendspinClient: sent initial time sync burst + state";
     } else if (type == QStringLiteral("server/state")) {
         handleServerState(payload);
     } else if (type == QStringLiteral("server/command")) {
@@ -228,6 +231,8 @@ void SendspinClient::sendHello()
 
     QJsonArray roles;
     roles.append(QStringLiteral("player@v1"));
+    roles.append(QStringLiteral("controller@v1"));
+    roles.append(QStringLiteral("metadata@v1"));
     payload[QStringLiteral("supported_roles")] = roles;
 
     QJsonObject deviceInfo;
