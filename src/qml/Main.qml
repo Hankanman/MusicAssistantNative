@@ -23,9 +23,6 @@ Kirigami.ApplicationWindow {
         collapsible: true
         collapsed: false
 
-        // Reserve space at bottom for the player bar
-        bottomPadding: root.showPlayerBar ? playerBar.height : 0
-
         actions: [
             Kirigami.Action {
                 text: i18n("Now Playing")
