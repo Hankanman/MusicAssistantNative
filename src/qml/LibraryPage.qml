@@ -55,7 +55,7 @@ Kirigami.Page {
         spacing: 0
 
         // Content area
-        QQC2.StackLayout {
+        StackLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
             currentIndex: searchQuery !== "" ? 5 : currentTab
