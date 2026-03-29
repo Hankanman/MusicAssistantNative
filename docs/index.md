@@ -7,12 +7,13 @@ A native KDE Plasma desktop client for [Music Assistant](https://music-assistant
 Music Assistant Native connects to your Music Assistant server and provides a Plasma-native interface for:
 
 - **Browsing** your unified music library — artists, albums, tracks, playlists, and radios from all your connected sources (Spotify, Tidal, Qobuz, Plex, local files, and more)
+- **Playing music locally** through your PC speakers — the app registers as a real Music Assistant player via the Sendspin audio protocol
 - **Controlling playback** on any connected speaker — Sonos, AirPlay, Chromecast, DLNA, Snapcast, Alexa, and more
 - **Managing your play queue** with shuffle, repeat, reordering, and search
 - **Switching between players** with per-player volume control
 
-!!! note "Remote control, not a local player"
-    This app is a **remote control** for your Music Assistant server. Audio streams directly from the server to your speakers — the desktop app does not play audio locally.
+!!! note "Local playback and remote control"
+    This app can both **play audio locally** through your PC speakers (via the Sendspin protocol) and act as a **remote control** for other Music Assistant players. The app's own player appears automatically in the Music Assistant player list.
 
 ## Quick Start
 

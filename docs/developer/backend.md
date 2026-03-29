@@ -115,18 +115,34 @@ Listens to `player_added`, `player_updated`, and `player_removed` events for rea
 
 **Roles:** `queueItemId`, `name`, `duration`, `imageUrl`, `artistName`, `albumName`, `itemIndex`, `available`
 
-## MaImageProvider
+## SendspinClient
 
-**File:** `src/imageprovider.h/cpp`
+**File:** `src/sendspinclient.h/cpp`
 
-A `QQuickAsyncImageProvider` that loads album art via the Music Assistant image proxy.
+Implements the Sendspin audio protocol, which registers the app as a real player in the Music Assistant player list. Communicates with the MA server via a WebSocket connection on **port 8927**.
 
-### URL Format in QML
+### Responsibilities
 
-```qml
-Image {
-    source: "image://ma/" + model.imageUrl
-}
-```
+- Establishes and maintains a WebSocket connection to the Sendspin endpoint
+- Registers the app as a player that appears in Music Assistant's player list
+- Receives binary FLAC audio frames from the server
+- Passes audio data to `AudioDecoder` for playback
 
-The `id` passed to `requestImageResponse` is the image path. The provider builds the full proxy URL and adds the `Authorization: Bearer` header.
+### Connection
+
+The Sendspin WebSocket connects automatically when the app authenticates with the MA server. The app's player is then visible to all Music Assistant clients and can be selected as a playback target.
+
+## AudioDecoder
+
+**File:** `src/audiodecoder.h/cpp`
+
+Handles local audio playback by decoding FLAC audio frames received from `SendspinClient` and playing them through `QMediaPlayer`.
+
+### Audio Pipeline
+
+1. FLAC audio frames arrive as binary WebSocket messages from `SendspinClient`
+2. Frames are written to a temporary file on disk
+3. `QMediaPlayer` is pointed at the temp file for playback
+4. Audio plays through the system's default audio output (PC speakers)
+
+No external dependencies (e.g. ffmpeg) are needed — Qt6 Multimedia handles FLAC decoding natively.

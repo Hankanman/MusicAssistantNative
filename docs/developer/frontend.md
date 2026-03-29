@@ -66,16 +66,15 @@ PlayerModel                    // QAbstractListModel
 
 ## Image Loading
 
-Album art uses Qt's image provider system:
+Album art is loaded directly via QML `Image` elements using URLs built by `MaClient.getImageUrl()`:
 
 ```qml
 Image {
-    // The "ma" provider is registered in main.cpp
-    source: model.imageUrl ? "image://ma/" + model.imageUrl : ""
+    source: model.imageUrl ? MaClient.getImageUrl(model.imageUrl) : ""
 }
 ```
 
-The `imageUrl` role from `MediaItemModel` contains the raw path from Music Assistant's metadata. The `MaImageProvider` converts this to a full proxy URL with authentication.
+The `getImageUrl()` method constructs the full image proxy URL (including size and authentication parameters), so no custom `QQuickAsyncImageProvider` is needed — Qt's built-in HTTP image loading handles everything.
 
 ## Kirigami Patterns Used
 

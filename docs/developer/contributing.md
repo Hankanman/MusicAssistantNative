@@ -23,9 +23,10 @@ MusicAssistantNative/
 │   ├── CMakeLists.txt                      # Source build rules
 │   ├── main.cpp                            # Entry point, wiring
 │   ├── maclient.h/cpp                      # WebSocket client
+│   ├── sendspinclient.h/cpp                # Sendspin audio protocol client
+│   ├── audiodecoder.h/cpp                  # FLAC decoding + QMediaPlayer playback
 │   ├── *controller.h/cpp                   # Business logic
 │   ├── *model.h/cpp                        # Data models for QML
-│   ├── imageprovider.h/cpp                 # Album art loader
 │   └── qml/*.qml                           # UI pages
 ├── tests/                                  # Integration test suite
 ├── docs/                                   # MkDocs documentation
@@ -98,7 +99,6 @@ rpmbuild -bb musicassistant-native.spec
 Areas that would benefit from contributions:
 
 - **MPRIS2 integration** — expose playback controls to Plasma's media widget
-- **Settings persistence** — save server URL and token to KConfig
 - **Album/artist detail pages** — drill-down views with track listings
 - **Drag-and-drop queue reordering** — DnD in the queue list
 - **Player grouping UI** — group/ungroup players from the app

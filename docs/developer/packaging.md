@@ -34,8 +34,8 @@ sudo dnf install ~/rpmbuild/RPMS/x86_64/musicassistant-native-0.1.0-1.fc43.x86_6
 
 | Section | Contents |
 |---------|----------|
-| `BuildRequires` | All Qt6 and KF6 `-devel` packages, CMake, ECM |
-| `Requires` | kirigami, qtwebsockets, qtdeclarative |
+| `BuildRequires` | All Qt6 and KF6 `-devel` packages (including `qt6-qtmultimedia-devel`), CMake, ECM |
+| `Requires` | kirigami, qtwebsockets, qtdeclarative, qt6-qtmultimedia |
 | `%build` | `%cmake` + `%cmake_build` |
 | `%check` | `desktop-file-validate` |
 
@@ -55,7 +55,7 @@ mock -r fedora-43-x86_64 --rebuild ~/rpmbuild/SRPMS/musicassistant-native-*.src.
 ```bash
 # Install build dependencies
 sudo apt-get install cmake extra-cmake-modules g++ \
-    qt6-base-dev qt6-declarative-dev qt6-websockets-dev \
+    qt6-base-dev qt6-declarative-dev qt6-websockets-dev qt6-multimedia-dev \
     libkf6kirigami-dev libkf6i18n-dev libkf6coreaddons-dev \
     libkf6config-dev libkf6dbusaddons-dev libkf6notifications-dev \
     libkf6windowsystem-dev libkf6iconthemes-dev \

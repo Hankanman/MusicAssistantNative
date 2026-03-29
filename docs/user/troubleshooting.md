@@ -50,6 +50,25 @@ The app sends WebSocket heartbeats every 25 seconds. If your network is unstable
 - Try broader search terms — search queries are sent to all configured providers
 - Some providers may have limited search capabilities
 
+## Sendspin / Local Playback Issues
+
+### App's player doesn't appear in Music Assistant
+
+- Ensure the Music Assistant server is reachable on the network
+- The Sendspin protocol uses **WebSocket on port 8927** — check that this port is not blocked by a firewall
+- Check the terminal output for Sendspin connection errors
+
+### No audio from PC speakers
+
+- Verify your system audio output is configured correctly (e.g. PipeWire/PulseAudio settings)
+- Check that the app's Sendspin player is selected as the active player
+- Look for `AudioDecoder` or `SendspinClient` messages in the debug output
+
+### Audio stutters or drops
+
+- The Sendspin protocol streams FLAC audio frames over WebSocket — network instability between your server and desktop can cause drops
+- Ensure you have a stable connection to the Music Assistant server
+
 ## Playback Issues
 
 ### No players showing up
@@ -76,7 +95,7 @@ The app sends WebSocket heartbeats every 25 seconds. If your network is unstable
 Run the app from a terminal to see debug messages:
 
 ```bash
-musicassistant-native 2>&1 | grep MaClient
+musicassistant-native 2>&1 | grep -E "MaClient|SendspinClient|AudioDecoder"
 ```
 
 Key messages to look for:
@@ -89,6 +108,8 @@ Key messages to look for:
 | `authentication successful!` | Fully connected and ready |
 | `authentication failed:` | Auth rejected — check token |
 | `disconnected` | Connection lost |
+| `SendspinClient: connected` | Sendspin audio channel established |
+| `AudioDecoder: playing` | Local audio playback started |
 
 ## Reporting Bugs
 

@@ -2,14 +2,16 @@
 
 ## Overview
 
-Music Assistant Native is a native Qt6/KDE Frameworks 6 application that acts as a remote control for a Music Assistant server. All audio processing and streaming happens server-side — the app communicates over WebSocket.
+Music Assistant Native is a native Qt6/KDE Frameworks 6 application that acts as both a **local audio player** and a **remote control** for a Music Assistant server. The app registers as a real MA player via the Sendspin protocol and can play audio through the PC speakers.
 
 ```mermaid
 graph TB
     subgraph "Music Assistant Native (Desktop App)"
         QML["QML / Kirigami UI"]
         CPP["C++ Backend"]
-        IMG["Image Provider"]
+        SS["SendspinClient"]
+        AD["AudioDecoder"]
+        MP["QMediaPlayer"]
     end
 
     subgraph "Music Assistant Server"
@@ -17,20 +19,26 @@ graph TB
         IMGP["Image Proxy (/imageproxy)"]
         LIB["Music Library"]
         PLAY["Player Manager"]
+        SSP["Sendspin Protocol (port 8927)"]
     end
 
     subgraph "External"
         SPEAKERS["Speakers (Sonos, AirPlay, etc.)"]
         PROVIDERS["Music Providers (Spotify, Tidal, etc.)"]
+        PCAUDIO["PC Speakers"]
     end
 
     QML --> CPP
     CPP -->|"JSON-RPC over WS"| WS
-    IMG -->|"HTTP + JWT"| IMGP
+    QML -->|"MaClient.getImageUrl()"| IMGP
     WS --> LIB
     WS --> PLAY
     LIB --> PROVIDERS
     PLAY --> SPEAKERS
+    SSP -->|"FLAC binary frames"| SS
+    SS --> AD
+    AD --> MP
+    MP --> PCAUDIO
 ```
 
 ## Technology Stack
@@ -40,9 +48,11 @@ graph TB
 | UI | QML + Kirigami | Declarative, Plasma-native interface |
 | Backend | C++20 | WebSocket client, data models, controllers |
 | Build | CMake + ECM | KDE-standard build system |
-| Packaging | RPM | Fedora distribution |
+| Audio | Qt6 Multimedia | Local FLAC playback via QMediaPlayer |
+| Packaging | RPM, DEB, AppImage | Linux distribution |
 | Communication | WebSocket JSON-RPC | Real-time bidirectional with MA server |
-| Images | Qt Image Provider | Async album art loading via HTTP |
+| Audio Protocol | Sendspin (WebSocket) | Registers as MA player, receives FLAC audio frames |
+| Images | QML Image + getImageUrl() | Direct image loading via MA image proxy URL |
 
 ## Component Overview
 
@@ -50,13 +60,14 @@ graph TB
 src/
 ├── main.cpp                 # App bootstrap, singleton wiring
 ├── maclient.h/cpp           # WebSocket client (core)
+├── sendspinclient.h/cpp     # Sendspin audio protocol client
+├── audiodecoder.h/cpp       # FLAC audio decoding + QMediaPlayer playback
 ├── playercontroller.h/cpp   # Player state & commands
 ├── queuecontroller.h/cpp    # Queue state & commands
 ├── librarycontroller.h/cpp  # Library browsing & search
 ├── mediaitemmodel.h/cpp     # QAbstractListModel for media items
 ├── playermodel.h/cpp        # QAbstractListModel for players
 ├── queueitemmodel.h/cpp     # QAbstractListModel for queue items
-├── imageprovider.h/cpp      # QQuickAsyncImageProvider
 └── qml/
     ├── Main.qml             # App window, navigation, bottom bar
     ├── NowPlayingPage.qml   # Current track, art, controls
@@ -101,15 +112,22 @@ The controllers listen for these events and update their properties, which trigg
 
 ### Image Loading
 
+Images are loaded directly via QML `Image` elements. The `MaClient.getImageUrl()` method builds the full image proxy URL (including authentication), and QML loads it as a standard HTTP image source — no custom image provider needed.
+
+### Sendspin Audio Pipeline
+
 ```mermaid
 sequenceDiagram
-    participant QML as QML Image
-    participant IP as MaImageProvider
-    participant MA as MA Server /imageproxy
+    participant MA as MA Server (port 8927)
+    participant SS as SendspinClient
+    participant AD as AudioDecoder
+    participant MP as QMediaPlayer
+    participant SPK as PC Speakers
 
-    QML->>IP: Request "image://ma/path|provider"
-    IP->>MA: GET /imageproxy?path=...&provider=...&size=300
-    Note over IP,MA: Authorization: Bearer <token>
-    MA->>IP: JPEG/PNG image data
-    IP->>QML: QImage → texture
+    SS->>MA: WebSocket connect (Sendspin protocol)
+    MA->>SS: Player registered in MA player list
+    MA->>SS: Binary FLAC audio frames
+    SS->>AD: Write frames to temp file
+    AD->>MP: Set temp file as media source
+    MP->>SPK: Audio output
 ```

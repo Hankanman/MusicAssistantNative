@@ -1,6 +1,14 @@
 # Managing Players
 
-The **Players** page lists all speakers and devices registered with your Music Assistant server.
+The **Players** page lists all speakers and devices registered with your Music Assistant server — including the app itself.
+
+## This App as a Player
+
+Music Assistant Native registers itself as a real Music Assistant player via the **Sendspin protocol**. This means:
+
+- The app appears in the player list with other speakers (e.g. Sonos, AirPlay)
+- Music Assistant can stream audio directly to your PC speakers
+- On startup, the app's own Sendspin player is **automatically selected** as the active player, so you can start playing music immediately without manual player selection
 
 ## Player List
 
@@ -33,6 +41,7 @@ Music Assistant supports many player types:
 | **DLNA** | UPnP/DLNA media renderers |
 | **Snapcast** | Snapcast multi-room clients |
 | **Amazon Alexa** | Echo devices |
+| **Sendspin** | Native desktop clients (like this app) |
 | **Web** | Browser-based players in the MA web UI |
 | **Groups** | Virtual groups of multiple players |
 

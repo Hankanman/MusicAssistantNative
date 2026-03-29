@@ -102,6 +102,12 @@ The sidebar header shows your connection status:
 | :material-circle:{ style="color: grey" } "Not connected" | Not connected to any server |
 | Spinning indicator | Connecting or authenticating |
 
+## Auto-Connect on Startup
+
+After your first successful connection, the app saves your server URL and authentication token to local settings (via QSettings). On subsequent launches, the app automatically reconnects to your server — no need to re-enter credentials each time.
+
+If the saved credentials become invalid (e.g. a revoked token), the app will show an authentication error and you can enter new credentials on the Settings page.
+
 ## Disconnecting
 
 Click **Disconnect** on the Settings page to close the connection. The app will retain your server URL for the next session.

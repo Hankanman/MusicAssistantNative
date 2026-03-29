@@ -7,7 +7,7 @@
 ```bash
 sudo dnf install cmake extra-cmake-modules gcc-c++ \
     qt6-qtbase-devel qt6-qtdeclarative-devel \
-    qt6-qtwebsockets-devel kf6-kirigami-devel \
+    qt6-qtwebsockets-devel qt6-qtmultimedia-devel kf6-kirigami-devel \
     kf6-ki18n-devel kf6-kcoreaddons-devel kf6-kconfig-devel \
     kf6-kdbusaddons-devel kf6-knotifications-devel \
     kf6-kwindowsystem-devel kf6-kiconthemes-devel \

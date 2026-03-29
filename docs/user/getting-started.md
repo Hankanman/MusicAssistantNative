@@ -37,7 +37,7 @@ Install build dependencies:
 ```bash
 sudo dnf install cmake extra-cmake-modules gcc-c++ \
     qt6-qtbase-devel qt6-qtdeclarative-devel \
-    qt6-qtwebsockets-devel kf6-kirigami-devel \
+    qt6-qtwebsockets-devel qt6-qtmultimedia-devel kf6-kirigami-devel \
     kf6-ki18n-devel kf6-kcoreaddons-devel kf6-kconfig-devel \
     kf6-kdbusaddons-devel kf6-knotifications-devel \
     kf6-kwindowsystem-devel kf6-kiconthemes-devel
@@ -71,5 +71,6 @@ These are pulled in automatically by the RPM, but if building from source:
 | Package | Purpose |
 |---------|---------|
 | `qt6-qtwebsockets` | WebSocket communication with MA server |
+| `qt6-qtmultimedia` | Local audio playback via Sendspin |
 | `qt6-qtdeclarative` | QML UI engine |
 | `kf6-kirigami` | KDE Kirigami UI components |

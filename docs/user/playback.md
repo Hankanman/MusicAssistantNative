@@ -1,5 +1,20 @@
 # Controlling Playback
 
+## Local Playback via Sendspin
+
+Music Assistant Native registers itself as a real player in your Music Assistant server using the **Sendspin audio protocol** (WebSocket on port 8927). This means:
+
+- The app appears in the Music Assistant player list alongside your other speakers
+- You can play music directly through your **PC speakers** without any additional hardware
+- Audio is streamed as FLAC frames from the server and decoded locally — no ffmpeg or external dependencies needed
+- The app's Sendspin player is **automatically selected** as the default player on startup
+
+When you select a track from the library, playback always starts from the beginning (the play option is "replace" — the queue is cleared and the selected track begins playing).
+
+### Play Buttons on Library Items
+
+Each item in the library (tracks, albums, playlists, etc.) has an explicit **play button** for quick playback. Click it to immediately start playing that item on the active player.
+
 ## Now Playing Page
 
 The **Now Playing** page (accessible from the sidebar) shows the current track with full controls:
@@ -21,7 +36,7 @@ The **Now Playing** page (accessible from the sidebar) shows the current track w
 
 ## Bottom Player Bar
 
-A persistent player bar appears at the bottom of every page once you're connected and have selected a player. It provides quick access to:
+A persistent player bar is positioned at the window level via the `contentItem`, independent of the sidebar. It appears at the bottom of every page once you're connected and have selected a player. It provides quick access to:
 
 - **Track thumbnail** — small album art
 - **Track info** — title and artist
