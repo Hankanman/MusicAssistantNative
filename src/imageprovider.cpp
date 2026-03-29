@@ -67,16 +67,23 @@ MaImageProvider::MaImageProvider(MaClient *client)
 
 QQuickImageResponse *MaImageProvider::requestImageResponse(const QString &id, const QSize &requestedSize)
 {
-    // id format: "path|provider|size" or just a full URL
+    // id format: "path|provider" from MediaItemModel::extractImageUrl
     auto parts = id.split(QLatin1Char('|'));
+    QString path = parts.value(0);
+    QString provider = parts.value(1);
     QString url;
 
-    if (parts.size() >= 2) {
+    if (path.startsWith(QStringLiteral("http://")) || path.startsWith(QStringLiteral("https://"))) {
+        // Remotely accessible image — use proxy for resizing/caching
         int size = requestedSize.isValid() ? qMax(requestedSize.width(), requestedSize.height()) : 300;
-        url = m_client->getImageUrl(parts.at(0), parts.at(1), size);
+        url = m_client->getImageUrl(path, provider, size);
+    } else if (!path.isEmpty()) {
+        // Local/provider path — must go through proxy
+        int size = requestedSize.isValid() ? qMax(requestedSize.width(), requestedSize.height()) : 300;
+        url = m_client->getImageUrl(path, provider, size);
     } else {
-        // Assume it's already a full URL or image proxy path
-        url = m_client->getImageUrl(id, QString(), 300);
+        // Empty — return empty response
+        return new MaImageResponse(QString(), requestedSize, QString());
     }
 
     return new MaImageResponse(url, requestedSize, m_client->token());

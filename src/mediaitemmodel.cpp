@@ -108,24 +108,32 @@ QJsonObject MediaItemModel::getItem(int index) const
 
 QString MediaItemModel::extractImageUrl(const QJsonObject &item)
 {
-    // Check metadata.images array
+    // Returns "path|provider" for the image provider, or empty string
+    auto extractFromImageObj = [](const QJsonObject &imgObj) -> QString {
+        auto path = imgObj.value(QStringLiteral("path")).toString();
+        if (path.isEmpty()) return {};
+        auto provider = imgObj.value(QStringLiteral("provider")).toString();
+        return path + QLatin1Char('|') + provider;
+    };
+
+    // Check metadata.images array — prefer thumb type
     auto metadata = item.value(QStringLiteral("metadata")).toObject();
     auto images = metadata.value(QStringLiteral("images")).toArray();
     for (const auto &img : images) {
         auto imgObj = img.toObject();
         auto type = imgObj.value(QStringLiteral("type")).toString();
         if (type == QStringLiteral("thumb") || type == QStringLiteral("0")) {
-            return imgObj.value(QStringLiteral("path")).toString();
+            return extractFromImageObj(imgObj);
         }
     }
     // Fallback to first image
     if (!images.isEmpty()) {
-        return images.first().toObject().value(QStringLiteral("path")).toString();
+        return extractFromImageObj(images.first().toObject());
     }
     // Check image field directly (for ItemMapping / QueueItem)
     auto image = item.value(QStringLiteral("image")).toObject();
     if (!image.isEmpty()) {
-        return image.value(QStringLiteral("path")).toString();
+        return extractFromImageObj(image);
     }
     return {};
 }
