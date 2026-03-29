@@ -1,5 +1,5 @@
 Name:           musicassistant-native
-Version:        0.1.0
+Version:        2026.03.29
 Release:        1%{?dist}
 Summary:        A native KDE client for Music Assistant
 

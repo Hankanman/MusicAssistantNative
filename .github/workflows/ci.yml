@@ -53,9 +53,9 @@ jobs:
       - name: Build RPM
         run: |
           mkdir -p ~/rpmbuild/{SOURCES,SPECS}
-          tar --transform 's,^\.,musicassistant-native-0.1.0,' \
+          tar --transform 's,^\.,musicassistant-native-2026.03.29,' \
             --exclude='build' --exclude='.git' --exclude='*.rpm' \
-            -czf ~/rpmbuild/SOURCES/musicassistant-native-0.1.0.tar.gz .
+            -czf ~/rpmbuild/SOURCES/musicassistant-native-2026.03.29.tar.gz .
           cp musicassistant-native.spec ~/rpmbuild/SPECS/
           rpmbuild -bb ~/rpmbuild/SPECS/musicassistant-native.spec
 
@@ -134,7 +134,7 @@ jobs:
         env:
           QMAKE: qmake6
           QML_SOURCES_PATHS: src/qml
-          VERSION: "0.1.0"
+          VERSION: "2026.03.29"
           APPIMAGE_EXTRACT_AND_RUN: "1"
           NO_STRIP: "1"
         run: |

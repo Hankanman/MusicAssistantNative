@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
     KAboutData aboutData(
         QStringLiteral("musicassistant-native"),
         i18n("Music Assistant Native"),
-        QStringLiteral("0.1.0"),
+        QStringLiteral("2026.03.29"),
         i18n("A native KDE client for Music Assistant"),
         KAboutLicense::GPL_V3,
         i18n("(c) 2024-2026")
