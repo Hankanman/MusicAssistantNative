@@ -20,40 +20,45 @@ QQC2.ItemDelegate {
     contentItem: RowLayout {
         spacing: Kirigami.Units.smallSpacing
 
-        // Thumbnail
-        Image {
-            source: delegate.resolvedImageUrl
+        // Thumbnail with fallback
+        Item {
             Layout.preferredWidth: Kirigami.Units.gridUnit * 3
             Layout.preferredHeight: Kirigami.Units.gridUnit * 3
-            fillMode: Image.PreserveAspectCrop
-            visible: delegate.resolvedImageUrl !== ""
-            asynchronous: true
-            cache: true
 
-            Rectangle {
+            Image {
+                id: thumbImage
                 anchors.fill: parent
-                color: "transparent"
-                border.color: Kirigami.Theme.disabledTextColor
-                border.width: 1
-                radius: 2
-            }
-        }
+                source: delegate.resolvedImageUrl
+                fillMode: Image.PreserveAspectCrop
+                asynchronous: true
+                cache: true
+                visible: status === Image.Ready
 
-        Kirigami.Icon {
-            source: {
-                switch (model.mediaType) {
-                case "artist": return "view-media-artist"
-                case "album": return "media-album-cover"
-                case "track": return "audio-x-generic"
-                case "playlist": return "view-media-playlist"
-                case "radio": return "radio"
-                default: return "audio-x-generic"
+                Rectangle {
+                    anchors.fill: parent
+                    color: "transparent"
+                    border.color: Kirigami.Theme.disabledTextColor
+                    border.width: 1
+                    radius: 2
                 }
             }
-            Layout.preferredWidth: Kirigami.Units.gridUnit * 3
-            Layout.preferredHeight: Kirigami.Units.gridUnit * 3
-            visible: delegate.resolvedImageUrl === ""
-            color: Kirigami.Theme.disabledTextColor
+
+            // Fallback icon — shown when no URL, loading, or load failed
+            Kirigami.Icon {
+                anchors.fill: parent
+                visible: thumbImage.status !== Image.Ready
+                color: Kirigami.Theme.disabledTextColor
+                source: {
+                    switch (model.mediaType) {
+                    case "artist": return "view-media-artist"
+                    case "album": return "media-album-cover"
+                    case "track": return "audio-x-generic"
+                    case "playlist": return "view-media-playlist"
+                    case "radio": return "radio"
+                    default: return "audio-x-generic"
+                    }
+                }
+            }
         }
 
         // Info

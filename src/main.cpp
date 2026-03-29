@@ -21,11 +21,14 @@
 // Suppress noisy Qt warnings that aren't actionable
 static void messageFilter(QtMsgType type, const QMessageLogContext &/*ctx*/, const QString &msg)
 {
-    // Portal registration fails when running uninstalled — not a real problem
     if (msg.contains(QStringLiteral("Could not register app ID")))
         return;
-    // FFmpeg backend info
     if (msg.contains(QStringLiteral("Using Qt multimedia with FFmpeg")))
+        return;
+    // Qt internal cleanup on shutdown — not actionable
+    if (msg.contains(QStringLiteral("Timers can only be used with threads started with QThread")))
+        return;
+    if (msg.contains(QStringLiteral("Cannot create children for a parent that is in a different thread")))
         return;
 
     // Default handler for everything else
