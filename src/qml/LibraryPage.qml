@@ -5,7 +5,7 @@ import org.kde.kirigami as Kirigami
 
 Kirigami.Page {
     id: libraryPage
-    title: i18n("Library")
+    title: searchQuery !== "" ? i18n("Search") : tabs[currentTab].name
     padding: 0
 
     property int currentTab: 0
@@ -164,42 +164,8 @@ Kirigami.Page {
         }
     }
 
-    // Navigation tab bar at footer
-    footer: Kirigami.NavigationTabBar {
-        visible: searchQuery === ""
-        actions: [
-            Kirigami.Action {
-                text: tabs[0].name
-                icon.name: tabs[0].icon
-                checked: currentTab === 0
-                onTriggered: { currentTab = 0; loadTab(0) }
-            },
-            Kirigami.Action {
-                text: tabs[1].name
-                icon.name: tabs[1].icon
-                checked: currentTab === 1
-                onTriggered: { currentTab = 1; loadTab(1) }
-            },
-            Kirigami.Action {
-                text: tabs[2].name
-                icon.name: tabs[2].icon
-                checked: currentTab === 2
-                onTriggered: { currentTab = 2; loadTab(2) }
-            },
-            Kirigami.Action {
-                text: tabs[3].name
-                icon.name: tabs[3].icon
-                checked: currentTab === 3
-                onTriggered: { currentTab = 3; loadTab(3) }
-            },
-            Kirigami.Action {
-                text: tabs[4].name
-                icon.name: tabs[4].icon
-                checked: currentTab === 4
-                onTriggered: { currentTab = 4; loadTab(4) }
-            }
-        ]
-    }
+    // Load data when tab changes (triggered from sidebar)
+    onCurrentTabChanged: loadTab(currentTab)
 
     // Album list view component
     Component {
