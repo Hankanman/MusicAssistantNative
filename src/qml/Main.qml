@@ -135,6 +135,8 @@ Kirigami.ApplicationWindow {
         padding: Kirigami.Units.smallSpacing
         topPadding: Kirigami.Units.smallSpacing
         bottomPadding: Kirigami.Units.smallSpacing
+        position: QQC2.ToolBar.Footer
+        background: Rectangle { color: Kirigami.Theme.backgroundColor }
 
         parent: root.contentItem
         anchors.left: parent.left
