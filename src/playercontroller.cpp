@@ -79,7 +79,16 @@ QString PlayerController::currentTrackImageUrl() const
 }
 
 int PlayerController::elapsed() const { return m_elapsed; }
-int PlayerController::duration() const { return m_duration; }
+int PlayerController::duration() const
+{
+    if (m_duration > 0) return m_duration;
+    // Fallback: try current_media from player state
+    auto media = m_playerState.value(QStringLiteral("current_media")).toObject();
+    int d = media.value(QStringLiteral("duration")).toInt(0);
+    if (d > 0) return d;
+    // Fallback: try elapsed_time_total from player state
+    return m_playerState.value(QStringLiteral("elapsed_time_total")).toInt(0);
+}
 
 bool PlayerController::isPlaying() const
 {

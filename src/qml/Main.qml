@@ -195,7 +195,6 @@ Kirigami.ApplicationWindow {
                 text: formatTime(PlayerController.elapsed)
                 font.pointSize: Kirigami.Theme.smallFont.pointSize
                 color: Kirigami.Theme.disabledTextColor
-                visible: PlayerController.duration > 0
             }
 
             // Seek slider
@@ -206,8 +205,6 @@ Kirigami.ApplicationWindow {
                 from: 0
                 to: Math.max(PlayerController.duration, 1)
                 value: pressed ? value : PlayerController.elapsed
-                enabled: PlayerController.duration > 0
-                visible: PlayerController.duration > 0
                 onMoved: PlayerController.seek(Math.round(value))
                 onPressedChanged: {
                     if (!pressed) PlayerController.seek(Math.round(value))
@@ -216,10 +213,9 @@ Kirigami.ApplicationWindow {
 
             // Duration
             QQC2.Label {
-                text: formatTime(PlayerController.duration)
+                text: PlayerController.duration > 0 ? formatTime(PlayerController.duration) : ""
                 font.pointSize: Kirigami.Theme.smallFont.pointSize
                 color: Kirigami.Theme.disabledTextColor
-                visible: PlayerController.duration > 0
             }
 
             // Playback controls
