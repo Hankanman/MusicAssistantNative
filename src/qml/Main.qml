@@ -200,11 +200,12 @@ Kirigami.ApplicationWindow {
 
             // Seek slider
             QQC2.Slider {
+                id: footerSeek
                 Layout.fillWidth: true
                 Layout.minimumWidth: Kirigami.Units.gridUnit * 6
                 from: 0
                 to: Math.max(PlayerController.duration, 1)
-                value: PlayerController.elapsed
+                value: pressed ? value : PlayerController.elapsed
                 enabled: PlayerController.duration > 0
                 visible: PlayerController.duration > 0
                 onMoved: PlayerController.seek(Math.round(value))

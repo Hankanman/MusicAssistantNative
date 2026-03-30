@@ -144,7 +144,7 @@ Kirigami.Page {
                 Layout.fillWidth: true
                 from: 0
                 to: PlayerController.duration > 0 ? PlayerController.duration : 1
-                value: PlayerController.elapsed
+                value: pressed ? value : PlayerController.elapsed
                 enabled: PlayerController.duration > 0
                 onMoved: PlayerController.seek(Math.round(value))
             }
