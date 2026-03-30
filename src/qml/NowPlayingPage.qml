@@ -147,6 +147,9 @@ Kirigami.Page {
                 value: pressed ? value : PlayerController.elapsed
                 enabled: PlayerController.duration > 0
                 onMoved: PlayerController.seek(Math.round(value))
+                onPressedChanged: {
+                    if (!pressed) PlayerController.seek(Math.round(value))
+                }
             }
 
             RowLayout {

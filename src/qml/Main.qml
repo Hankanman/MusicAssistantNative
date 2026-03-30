@@ -209,6 +209,9 @@ Kirigami.ApplicationWindow {
                 enabled: PlayerController.duration > 0
                 visible: PlayerController.duration > 0
                 onMoved: PlayerController.seek(Math.round(value))
+                onPressedChanged: {
+                    if (!pressed) PlayerController.seek(Math.round(value))
+                }
             }
 
             // Duration
