@@ -147,23 +147,32 @@ Kirigami.ScrollablePage {
             Repeater {
                 model: albumsListModel
                 delegate: AlbumGridDelegate {
+                    required property int index
+                    required property string albumName
+                    required property string albumArtist
+                    required property string albumImageUrl
+                    required property string albumUri
+                    required property int albumYear
+                    required property string albumItemId
+                    required property string albumProvider
+
                     Layout.fillWidth: true
                     Layout.preferredWidth: Kirigami.Units.gridUnit * 10
                     Layout.maximumWidth: Kirigami.Units.gridUnit * 12
-                    name: model.albumName
-                    artistName: model.albumArtist
-                    imageUrl: model.albumImageUrl
-                    uri: model.albumUri
-                    year: model.albumYear
+                    name: albumName
+                    artistName: albumArtist
+                    imageUrl: albumImageUrl
+                    uri: albumUri
+                    year: albumYear
                     onItemActivated: {
                         applicationWindow().pageStack.push(Qt.resolvedUrl("AlbumDetailPage.qml"), {
-                            albumName: model.albumName,
-                            artistName: model.albumArtist,
-                            imageUrl: model.albumImageUrl,
-                            year: model.albumYear,
-                            itemId: model.albumItemId,
-                            provider: model.albumProvider,
-                            uri: model.albumUri
+                            albumName: albumName,
+                            artistName: albumArtist,
+                            imageUrl: albumImageUrl,
+                            year: albumYear,
+                            itemId: albumItemId,
+                            provider: albumProvider,
+                            uri: albumUri
                         })
                     }
                     onPlayRequested: (uri) => {
