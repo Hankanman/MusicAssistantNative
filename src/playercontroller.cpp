@@ -166,7 +166,17 @@ void PlayerController::fetchPlayerState()
 
 void PlayerController::onEvent(const QString &event, const QString &objectId, const QJsonObject &data)
 {
-    // Queue events — track elapsed time and duration from the server
+    // queue_time_updated fires every ~1 second with the current track position
+    if (event == QStringLiteral("queue_time_updated") && objectId == m_currentPlayerId) {
+        int e = static_cast<int>(data.value(QStringLiteral("elapsed_time")).toDouble(-1));
+        if (e >= 0 && e != m_elapsed) {
+            m_elapsed = e;
+            Q_EMIT elapsedChanged();
+        }
+        return;
+    }
+
+    // Queue state changes — track elapsed time and duration from the server
     if (event == QStringLiteral("queue_updated") && objectId == m_currentPlayerId) {
         qreal e = data.value(QStringLiteral("elapsed_time")).toDouble(-1);
         if (e >= 0) {

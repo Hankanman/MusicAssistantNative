@@ -325,6 +325,13 @@ void MaClient::handleEvent(const QJsonObject &msg)
 {
     QString event = msg.value(QStringLiteral("event")).toString();
     QString objectId = msg.value(QStringLiteral("object_id")).toString();
-    QJsonObject data = msg.value(QStringLiteral("data")).toObject();
+    QJsonValue dataVal = msg.value(QStringLiteral("data"));
+    QJsonObject data = dataVal.toObject(); // empty for non-object data
+
+    // For queue_time_updated, data is a float (elapsed seconds)
+    if (event == QStringLiteral("queue_time_updated") && dataVal.isDouble()) {
+        data[QStringLiteral("elapsed_time")] = dataVal.toDouble();
+    }
+
     Q_EMIT eventReceived(event, objectId, data);
 }
