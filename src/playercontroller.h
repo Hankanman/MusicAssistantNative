@@ -79,4 +79,5 @@ private:
     QTimer *m_elapsedTimer;
     qreal m_lastElapsed = 0;
     qint64 m_lastElapsedUpdate = 0;
+    int m_queueDuration = 0;
 };
