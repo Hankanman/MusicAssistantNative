@@ -46,9 +46,6 @@ Kirigami.ApplicationWindow {
                 onTriggered: root.switchPage(playersPage)
             },
             Kirigami.Action {
-                separator: true
-            },
-            Kirigami.Action {
                 text: i18n("Settings")
                 icon.name: "settings-configure"
                 onTriggered: root.switchPage(settingsPage)
