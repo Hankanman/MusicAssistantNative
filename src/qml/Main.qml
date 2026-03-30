@@ -190,15 +190,32 @@ Kirigami.ApplicationWindow {
                 }
             }
 
-            // Progress slider
+            // Elapsed time
+            QQC2.Label {
+                text: formatTime(PlayerController.elapsed)
+                font.pointSize: Kirigami.Theme.smallFont.pointSize
+                color: Kirigami.Theme.disabledTextColor
+                visible: PlayerController.duration > 0
+            }
+
+            // Seek slider
             QQC2.Slider {
                 Layout.fillWidth: true
-                Layout.maximumWidth: Kirigami.Units.gridUnit * 12
+                Layout.minimumWidth: Kirigami.Units.gridUnit * 6
                 from: 0
-                to: PlayerController.duration > 0 ? PlayerController.duration : 1
+                to: Math.max(PlayerController.duration, 1)
                 value: PlayerController.elapsed
                 enabled: PlayerController.duration > 0
+                visible: PlayerController.duration > 0
                 onMoved: PlayerController.seek(Math.round(value))
+            }
+
+            // Duration
+            QQC2.Label {
+                text: formatTime(PlayerController.duration)
+                font.pointSize: Kirigami.Theme.smallFont.pointSize
+                color: Kirigami.Theme.disabledTextColor
+                visible: PlayerController.duration > 0
             }
 
             // Playback controls
@@ -272,4 +289,10 @@ Kirigami.ApplicationWindow {
 
     }
 
+    function formatTime(seconds) {
+        if (seconds <= 0) return "0:00"
+        var mins = Math.floor(seconds / 60)
+        var secs = Math.floor(seconds % 60)
+        return mins + ":" + (secs < 10 ? "0" : "") + secs
+    }
 }
