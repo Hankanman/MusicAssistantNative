@@ -130,21 +130,40 @@ Kirigami.ApplicationWindow {
     Shortcut { sequence: "Ctrl+Down"; onActivated: PlayerController.volumeDown() }
 
     // Give pageStack bottom margin so content isn't hidden behind player bar
-    pageStack.anchors.bottomMargin: root.showPlayerBar ? playerBar.height : 0
+    pageStack.anchors.bottomMargin: root.showPlayerBar ? playerBarContainer.height : 0
 
     // Persistent bottom player bar — anchored to window contentItem (below sidebar)
-    QQC2.ToolBar {
-        id: playerBar
+    Item {
+        id: playerBarContainer
         visible: root.showPlayerBar
         z: 1
-        padding: Kirigami.Units.smallSpacing
-        topPadding: Kirigami.Units.smallSpacing
-        bottomPadding: Kirigami.Units.smallSpacing
+        implicitHeight: playerBar.implicitHeight
 
         parent: root.contentItem
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
+
+        // Progress bar at top
+        QQC2.ProgressBar {
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: 3
+            from: 0
+            to: PlayerController.duration > 0 ? PlayerController.duration : 1
+            value: PlayerController.elapsed
+            visible: PlayerController.duration > 0
+            background: Rectangle { color: Kirigami.Theme.backgroundColor }
+            z: 2
+        }
+
+    QQC2.ToolBar {
+        id: playerBar
+        anchors.fill: parent
+        padding: Kirigami.Units.smallSpacing
+        topPadding: Kirigami.Units.smallSpacing
+        bottomPadding: Kirigami.Units.smallSpacing
 
         contentItem: RowLayout {
             id: playerBarRow
@@ -261,18 +280,5 @@ Kirigami.ApplicationWindow {
 
     }
 
-    // Thin progress bar overlaid at top of player bar
-    QQC2.ProgressBar {
-        parent: playerBar
-        anchors.top: playerBar.top
-        anchors.left: playerBar.left
-        anchors.right: playerBar.right
-        height: 2
-        from: 0
-        to: PlayerController.duration > 0 ? PlayerController.duration : 1
-        value: PlayerController.elapsed
-        visible: PlayerController.duration > 0
-        background: Rectangle { color: "transparent" }
-        z: 10
-    }
+    } // playerBarContainer
 }
