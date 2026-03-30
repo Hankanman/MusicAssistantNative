@@ -98,6 +98,7 @@ int PlayerController::elapsed() const
 int PlayerController::duration() const
 {
     if (m_duration > 0) return m_duration;
+    // Fallback to current_media from player state
     auto media = m_playerState.value(QStringLiteral("current_media")).toObject();
     return media.value(QStringLiteral("duration")).toInt(0);
 }
@@ -220,8 +221,11 @@ void PlayerController::onEvent(const QString &event, const QString &objectId, co
 
     if (event == QStringLiteral("player_updated")) {
         m_playerState = data;
+        // Pick up duration from current_media if queue hasn't provided it
+        auto media = data.value(QStringLiteral("current_media")).toObject();
+        int d = media.value(QStringLiteral("duration")).toInt(0);
+        if (d > 0) m_duration = d;
         Q_EMIT playerStateChanged();
-        // Start/stop interpolation timer based on playback state
         if (isPlaying()) m_interpolateTimer->start();
         else m_interpolateTimer->stop();
     }
