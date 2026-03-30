@@ -130,40 +130,21 @@ Kirigami.ApplicationWindow {
     Shortcut { sequence: "Ctrl+Down"; onActivated: PlayerController.volumeDown() }
 
     // Give pageStack bottom margin so content isn't hidden behind player bar
-    pageStack.anchors.bottomMargin: root.showPlayerBar ? playerBarContainer.height : 0
+    pageStack.anchors.bottomMargin: root.showPlayerBar ? playerBar.height : 0
 
     // Persistent bottom player bar — anchored to window contentItem (below sidebar)
-    Item {
-        id: playerBarContainer
+    QQC2.ToolBar {
+        id: playerBar
         visible: root.showPlayerBar
         z: 1
-        implicitHeight: playerBar.implicitHeight
+        padding: Kirigami.Units.smallSpacing
+        topPadding: Kirigami.Units.smallSpacing
+        bottomPadding: Kirigami.Units.smallSpacing
 
         parent: root.contentItem
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-
-        // Progress bar at top
-        QQC2.ProgressBar {
-            anchors.top: parent.top
-            anchors.left: parent.left
-            anchors.right: parent.right
-            height: 3
-            from: 0
-            to: PlayerController.duration > 0 ? PlayerController.duration : 1
-            value: PlayerController.elapsed
-            visible: PlayerController.duration > 0
-            background: Rectangle { color: Kirigami.Theme.backgroundColor }
-            z: 2
-        }
-
-    QQC2.ToolBar {
-        id: playerBar
-        anchors.fill: parent
-        padding: Kirigami.Units.smallSpacing
-        topPadding: Kirigami.Units.smallSpacing
-        bottomPadding: Kirigami.Units.smallSpacing
 
         contentItem: RowLayout {
             id: playerBarRow
@@ -207,6 +188,17 @@ Kirigami.ApplicationWindow {
                     Layout.fillWidth: true
                     visible: text !== ""
                 }
+            }
+
+            // Progress slider
+            QQC2.Slider {
+                Layout.fillWidth: true
+                Layout.maximumWidth: Kirigami.Units.gridUnit * 12
+                from: 0
+                to: PlayerController.duration > 0 ? PlayerController.duration : 1
+                value: PlayerController.elapsed
+                enabled: PlayerController.duration > 0
+                onMoved: PlayerController.seek(Math.round(value))
             }
 
             // Playback controls
@@ -280,5 +272,4 @@ Kirigami.ApplicationWindow {
 
     }
 
-    } // playerBarContainer
 }
