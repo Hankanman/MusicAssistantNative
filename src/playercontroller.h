@@ -67,7 +67,6 @@ Q_SIGNALS:
 
 private Q_SLOTS:
     void onEvent(const QString &event, const QString &objectId, const QJsonObject &data);
-    void updateElapsed();
 
 private:
     void sendPlayerCommand(const QString &cmd, const QJsonObject &extraArgs = {});
@@ -76,8 +75,6 @@ private:
     MaClient *m_client = nullptr;
     QString m_currentPlayerId;
     QJsonObject m_playerState;
-    QTimer *m_elapsedTimer;
-    qreal m_lastElapsed = 0;
-    qint64 m_lastElapsedUpdate = 0;
-    int m_queueDuration = 0;
+    int m_elapsed = 0;
+    int m_duration = 0;
 };
