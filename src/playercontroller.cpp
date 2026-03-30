@@ -151,9 +151,7 @@ void PlayerController::fetchPlayerState()
         [this](const QJsonValue &result, const QString &error) {
             if (error.isEmpty() && result.isObject()) {
                 m_playerState = result.toObject();
-                m_elapsed = static_cast<int>(m_playerState.value(QStringLiteral("elapsed_time")).toDouble(0));
                 Q_EMIT playerStateChanged();
-                Q_EMIT elapsedChanged();
             }
         });
 
@@ -205,8 +203,8 @@ void PlayerController::onEvent(const QString &event, const QString &objectId, co
 
     if (event == QStringLiteral("player_updated")) {
         m_playerState = data;
-        m_elapsed = static_cast<int>(m_playerState.value(QStringLiteral("elapsed_time")).toDouble(m_elapsed));
+        // Don't update m_elapsed from player_updated — the player's elapsed_time
+        // is time since stream start, not track position. Use queue events only.
         Q_EMIT playerStateChanged();
-        Q_EMIT elapsedChanged();
     }
 }
