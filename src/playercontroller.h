@@ -75,6 +75,8 @@ private:
     MaClient *m_client = nullptr;
     QString m_currentPlayerId;
     QJsonObject m_playerState;
-    int m_elapsed = 0;
+    QTimer *m_interpolateTimer;
+    qreal m_serverElapsed = 0;     // last elapsed from server
+    qint64 m_serverElapsedAt = 0;  // when we received it (msec since epoch)
     int m_duration = 0;
 };

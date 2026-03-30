@@ -4,7 +4,13 @@
 
 PlayerController::PlayerController(QObject *parent)
     : QObject(parent)
+    , m_interpolateTimer(new QTimer(this))
 {
+    // Tick every second to update the interpolated elapsed time
+    m_interpolateTimer->setInterval(1000);
+    connect(m_interpolateTimer, &QTimer::timeout, this, [this]() {
+        if (isPlaying()) Q_EMIT elapsedChanged();
+    });
 }
 
 void PlayerController::setClient(MaClient *client)
@@ -78,16 +84,22 @@ QString PlayerController::currentTrackImageUrl() const
     return media.value(QStringLiteral("image_url")).toString();
 }
 
-int PlayerController::elapsed() const { return m_elapsed; }
+int PlayerController::elapsed() const
+{
+    // Interpolate from last server update if playing
+    if (isPlaying() && m_serverElapsedAt > 0) {
+        qint64 now = QDateTime::currentMSecsSinceEpoch();
+        qreal delta = (now - m_serverElapsedAt) / 1000.0;
+        return qBound(0, static_cast<int>(m_serverElapsed + delta), m_duration > 0 ? m_duration : 999999);
+    }
+    return static_cast<int>(m_serverElapsed);
+}
+
 int PlayerController::duration() const
 {
     if (m_duration > 0) return m_duration;
-    // Fallback: try current_media from player state
     auto media = m_playerState.value(QStringLiteral("current_media")).toObject();
-    int d = media.value(QStringLiteral("duration")).toInt(0);
-    if (d > 0) return d;
-    // Fallback: try elapsed_time_total from player state
-    return m_playerState.value(QStringLiteral("elapsed_time_total")).toInt(0);
+    return media.value(QStringLiteral("duration")).toInt(0);
 }
 
 bool PlayerController::isPlaying() const
@@ -104,8 +116,8 @@ void PlayerController::previous() { sendPlayerCommand(QStringLiteral("players/cm
 
 void PlayerController::seek(int position)
 {
-    // Optimistically update elapsed so the slider doesn't snap back
-    m_elapsed = position;
+    m_serverElapsed = position;
+    m_serverElapsedAt = QDateTime::currentMSecsSinceEpoch();
     Q_EMIT elapsedChanged();
     sendPlayerCommand(QStringLiteral("players/cmd/seek"), {{QStringLiteral("position"), position}});
 }
@@ -145,25 +157,28 @@ void PlayerController::fetchPlayerState()
 {
     if (!m_client || m_currentPlayerId.isEmpty() || !m_client->isAuthenticated()) return;
 
-    QJsonObject args;
-    args[QStringLiteral("player_id")] = m_currentPlayerId;
-    m_client->sendCommand(QStringLiteral("players/get"), args,
+    m_client->sendCommand(QStringLiteral("players/get"),
+        {{QStringLiteral("player_id"), m_currentPlayerId}},
         [this](const QJsonValue &result, const QString &error) {
             if (error.isEmpty() && result.isObject()) {
                 m_playerState = result.toObject();
                 Q_EMIT playerStateChanged();
+                // Start/stop interpolation timer based on playback state
+                if (isPlaying()) m_interpolateTimer->start();
+                else m_interpolateTimer->stop();
             }
         });
 
-    // Also fetch queue state for elapsed/duration
+    // Fetch queue for elapsed and duration
     m_client->sendCommand(QStringLiteral("player_queues/get"),
         {{QStringLiteral("queue_id"), m_currentPlayerId}},
         [this](const QJsonValue &result, const QString &error) {
             if (error.isEmpty() && result.isObject()) {
                 auto q = result.toObject();
-                m_elapsed = static_cast<int>(q.value(QStringLiteral("elapsed_time")).toDouble(m_elapsed));
-                auto currentItem = q.value(QStringLiteral("current_item")).toObject();
-                int d = currentItem.value(QStringLiteral("duration")).toInt(0);
+                m_serverElapsed = q.value(QStringLiteral("elapsed_time")).toDouble(m_serverElapsed);
+                m_serverElapsedAt = QDateTime::currentMSecsSinceEpoch();
+                auto ci = q.value(QStringLiteral("current_item")).toObject();
+                int d = ci.value(QStringLiteral("duration")).toInt(0);
                 if (d > 0) m_duration = d;
                 Q_EMIT elapsedChanged();
                 Q_EMIT playerStateChanged();
@@ -173,26 +188,28 @@ void PlayerController::fetchPlayerState()
 
 void PlayerController::onEvent(const QString &event, const QString &objectId, const QJsonObject &data)
 {
-    // queue_time_updated fires every ~1 second with the current track position
+    // queue_time_updated — server sends actual track position (infrequent but authoritative)
     if (event == QStringLiteral("queue_time_updated") && objectId == m_currentPlayerId) {
-        int e = static_cast<int>(data.value(QStringLiteral("elapsed_time")).toDouble(-1));
-        if (e >= 0 && e != m_elapsed) {
-            m_elapsed = e;
+        qreal e = data.value(QStringLiteral("elapsed_time")).toDouble(-1);
+        if (e >= 0) {
+            m_serverElapsed = e;
+            m_serverElapsedAt = QDateTime::currentMSecsSinceEpoch();
             Q_EMIT elapsedChanged();
         }
         return;
     }
 
-    // Queue state changes — track elapsed time and duration from the server
+    // queue_updated — queue state changes (track change, seek response, etc.)
     if (event == QStringLiteral("queue_updated") && objectId == m_currentPlayerId) {
         qreal e = data.value(QStringLiteral("elapsed_time")).toDouble(-1);
         if (e >= 0) {
-            m_elapsed = static_cast<int>(e);
+            m_serverElapsed = e;
+            m_serverElapsedAt = QDateTime::currentMSecsSinceEpoch();
             Q_EMIT elapsedChanged();
         }
-        auto currentItem = data.value(QStringLiteral("current_item")).toObject();
-        int d = currentItem.value(QStringLiteral("duration")).toInt(0);
-        if (d > 0) {
+        auto ci = data.value(QStringLiteral("current_item")).toObject();
+        int d = ci.value(QStringLiteral("duration")).toInt(0);
+        if (d > 0 && d != m_duration) {
             m_duration = d;
             Q_EMIT playerStateChanged();
         }
@@ -203,8 +220,9 @@ void PlayerController::onEvent(const QString &event, const QString &objectId, co
 
     if (event == QStringLiteral("player_updated")) {
         m_playerState = data;
-        // Don't update m_elapsed from player_updated — the player's elapsed_time
-        // is time since stream start, not track position. Use queue events only.
         Q_EMIT playerStateChanged();
+        // Start/stop interpolation timer based on playback state
+        if (isPlaying()) m_interpolateTimer->start();
+        else m_interpolateTimer->stop();
     }
 }
