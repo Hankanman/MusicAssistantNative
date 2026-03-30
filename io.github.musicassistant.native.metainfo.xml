@@ -29,6 +29,11 @@
   </provides>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="2026.03.30" date="2026-03-30">
+      <description>
+        <p>UI overhaul: detail pages, MPRIS2, Sendspin audio, FormCard settings, keyboard shortcuts</p>
+      </description>
+    </release>
     <release version="2026.03.29" date="2026-03-29">
       <description>
         <p>Initial release</p>
