@@ -31,35 +31,29 @@ Kirigami.ApplicationWindow {
                 onTriggered: root.switchPage(nowPlayingPage)
             },
             Kirigami.Action {
-                text: i18n("Library")
+                text: i18n("Artists")
+                icon.name: "view-media-artist"
+                onTriggered: { libraryPage.currentTab = 0; root.switchPage(libraryPage) }
+            },
+            Kirigami.Action {
+                text: i18n("Albums")
+                icon.name: "media-album-cover"
+                onTriggered: { libraryPage.currentTab = 1; root.switchPage(libraryPage) }
+            },
+            Kirigami.Action {
+                text: i18n("Tracks")
+                icon.name: "audio-x-generic"
+                onTriggered: { libraryPage.currentTab = 2; root.switchPage(libraryPage) }
+            },
+            Kirigami.Action {
+                text: i18n("Playlists")
                 icon.name: "view-media-playlist"
-                onTriggered: root.switchPage(libraryPage)
-
-                Kirigami.Action {
-                    text: i18n("Artists")
-                    icon.name: "view-media-artist"
-                    onTriggered: { libraryPage.currentTab = 0; root.switchPage(libraryPage) }
-                }
-                Kirigami.Action {
-                    text: i18n("Albums")
-                    icon.name: "media-album-cover"
-                    onTriggered: { libraryPage.currentTab = 1; root.switchPage(libraryPage) }
-                }
-                Kirigami.Action {
-                    text: i18n("Tracks")
-                    icon.name: "audio-x-generic"
-                    onTriggered: { libraryPage.currentTab = 2; root.switchPage(libraryPage) }
-                }
-                Kirigami.Action {
-                    text: i18n("Playlists")
-                    icon.name: "view-media-playlist"
-                    onTriggered: { libraryPage.currentTab = 3; root.switchPage(libraryPage) }
-                }
-                Kirigami.Action {
-                    text: i18n("Radios")
-                    icon.name: "radio"
-                    onTriggered: { libraryPage.currentTab = 4; root.switchPage(libraryPage) }
-                }
+                onTriggered: { libraryPage.currentTab = 3; root.switchPage(libraryPage) }
+            },
+            Kirigami.Action {
+                text: i18n("Radios")
+                icon.name: "radio"
+                onTriggered: { libraryPage.currentTab = 4; root.switchPage(libraryPage) }
             },
             Kirigami.Action {
                 text: i18n("Queue")
