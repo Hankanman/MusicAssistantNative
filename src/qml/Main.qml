@@ -112,9 +112,6 @@ Kirigami.ApplicationWindow {
 
     function switchPage(page) {
         if (pageStack.currentItem !== page) {
-            // Use replace to avoid destroying the old page while Kirigami
-            // is still incubating its ActionToolBar
-            while (pageStack.depth > 1) pageStack.pop()
             pageStack.replace(page)
         }
     }

@@ -204,6 +204,7 @@ void MaClient::onConnected()
 void MaClient::onDisconnected()
 {
     m_heartbeatTimer.stop();
+    bool wasAuthenticated = m_authenticated;
     m_connected = false;
     m_authenticated = false;
     m_serverReady = false;
@@ -213,6 +214,16 @@ void MaClient::onDisconnected()
     Q_EMIT authenticatedChanged();
     Q_EMIT serverReadyChanged();
     qDebug() << "MaClient: disconnected";
+
+    // Auto-reconnect if we were previously authenticated
+    if (wasAuthenticated && !m_serverUrl.isEmpty()) {
+        qDebug() << "MaClient: will reconnect in 5s...";
+        QTimer::singleShot(5000, this, [this]() {
+            if (!m_connected) {
+                connectToServer(m_serverUrl);
+            }
+        });
+    }
 }
 
 void MaClient::onTextMessageReceived(const QString &message)
