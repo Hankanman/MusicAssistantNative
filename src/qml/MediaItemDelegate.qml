@@ -35,13 +35,6 @@ QQC2.ItemDelegate {
                 cache: true
                 visible: status === Image.Ready
 
-                Rectangle {
-                    anchors.fill: parent
-                    color: "transparent"
-                    border.color: Kirigami.Theme.disabledTextColor
-                    border.width: 1
-                    radius: 2
-                }
             }
 
             // Fallback icon — shown when no URL, loading, or load failed

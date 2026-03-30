@@ -156,13 +156,6 @@ Kirigami.ApplicationWindow {
                 fillMode: Image.PreserveAspectCrop
                 visible: PlayerController.currentTrackImageUrl !== ""
 
-                Rectangle {
-                    anchors.fill: parent
-                    color: "transparent"
-                    border.color: Kirigami.Theme.disabledTextColor
-                    border.width: 1
-                    radius: 3
-                }
 
                 MouseArea {
                     anchors.fill: parent

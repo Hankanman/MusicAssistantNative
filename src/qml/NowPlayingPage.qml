@@ -52,15 +52,6 @@ Kirigami.Page {
             Layout.maximumWidth: Kirigami.Units.gridUnit * 22
             Layout.alignment: Qt.AlignHCenter
 
-            // Shadow
-            Rectangle {
-                anchors.fill: albumArtContainer
-                anchors.margins: -2
-                radius: Kirigami.Units.cornerRadius + 2
-                color: "transparent"
-                border.color: Qt.rgba(0, 0, 0, 0.2)
-                border.width: 2
-            }
 
             Rectangle {
                 id: albumArtContainer
