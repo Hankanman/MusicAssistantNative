@@ -135,20 +135,17 @@ Kirigami.ApplicationWindow {
         id: playerBar
         visible: root.showPlayerBar
         z: 1
-        implicitHeight: playerBarRow.implicitHeight + Kirigami.Units.smallSpacing * 2
+        padding: Kirigami.Units.smallSpacing
+        topPadding: Kirigami.Units.smallSpacing
+        bottomPadding: Kirigami.Units.smallSpacing
 
         parent: root.contentItem
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
 
-        RowLayout {
+        contentItem: RowLayout {
             id: playerBarRow
-            anchors.fill: parent
-            anchors.leftMargin: Kirigami.Units.smallSpacing
-            anchors.rightMargin: Kirigami.Units.smallSpacing
-            anchors.topMargin: Kirigami.Units.smallSpacing
-            anchors.bottomMargin: Kirigami.Units.smallSpacing
             spacing: Kirigami.Units.smallSpacing
 
             // Album art thumbnail
