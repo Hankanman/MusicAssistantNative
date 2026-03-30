@@ -14,6 +14,7 @@ Kirigami.ApplicationWindow {
 
     property bool isConnected: MaClient.authenticated
     property bool showPlayerBar: root.isConnected && PlayerController.currentPlayerId !== ""
+                                && pageStack.currentItem !== nowPlayingPage
 
     globalDrawer: Kirigami.GlobalDrawer {
         title: i18n("Music Assistant")
@@ -151,6 +152,7 @@ Kirigami.ApplicationWindow {
             spacing: Kirigami.Units.smallSpacing
 
             // Album art thumbnail
+            // Album art — click to open Now Playing
             Image {
                 source: PlayerController.currentTrackImageUrl !== ""
                     ? PlayerController.currentTrackImageUrl
@@ -166,6 +168,12 @@ Kirigami.ApplicationWindow {
                     border.color: Kirigami.Theme.disabledTextColor
                     border.width: 1
                     radius: 3
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.switchPage(nowPlayingPage)
                 }
             }
 
