@@ -257,17 +257,20 @@ Kirigami.ApplicationWindow {
             }
         }
 
-        // Thin progress bar at top of player bar
-        QQC2.ProgressBar {
-            anchors.top: parent.top
-            anchors.left: parent.left
-            anchors.right: parent.right
-            height: 2
-            from: 0
-            to: PlayerController.duration > 0 ? PlayerController.duration : 1
-            value: PlayerController.elapsed
-            visible: PlayerController.duration > 0
-            background: Rectangle { color: "transparent" }
-        }
+    }
+
+    // Thin progress bar at top of player bar (outside ToolBar to avoid layout conflict)
+    QQC2.ProgressBar {
+        parent: root.contentItem
+        anchors.left: playerBar.left
+        anchors.right: playerBar.right
+        anchors.bottom: playerBar.top
+        height: 2
+        from: 0
+        to: PlayerController.duration > 0 ? PlayerController.duration : 1
+        value: PlayerController.elapsed
+        visible: playerBar.visible && PlayerController.duration > 0
+        background: Rectangle { color: "transparent" }
+        z: 2
     }
 }
