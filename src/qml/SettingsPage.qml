@@ -20,7 +20,6 @@ FormCard.FormCardPage {
             placeholderText: "http://192.168.1.100:8095"
         }
 
-        FormCard.FormDelegateSeparator {}
 
         FormCard.FormTextFieldDelegate {
             id: tokenField
@@ -29,7 +28,6 @@ FormCard.FormCardPage {
             echoMode: TextInput.Password
         }
 
-        FormCard.FormDelegateSeparator {}
 
         FormCard.FormButtonDelegate {
             text: MaClient.connected ? i18n("Disconnect") : i18n("Connect")
@@ -67,7 +65,6 @@ FormCard.FormCardPage {
             placeholderText: i18n("admin")
         }
 
-        FormCard.FormDelegateSeparator {}
 
         FormCard.FormTextFieldDelegate {
             id: passwordField

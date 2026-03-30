@@ -132,10 +132,6 @@ Kirigami.ScrollablePage {
             }
         }
 
-        // Separator
-        Kirigami.Separator {
-            Layout.fillWidth: true
-        }
 
         // Track list
         Repeater {

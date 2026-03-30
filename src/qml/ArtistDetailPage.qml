@@ -122,10 +122,6 @@ Kirigami.ScrollablePage {
             }
         }
 
-        // Separator
-        Kirigami.Separator {
-            Layout.fillWidth: true
-        }
 
         // Section header
         Kirigami.Heading {
