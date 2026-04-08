@@ -52,6 +52,22 @@ QString QueueController::currentItemName() const
     return currentItem.value(QStringLiteral("name")).toString();
 }
 
+bool QueueController::dontStopTheMusic() const
+{
+    return m_queueState.value(QStringLiteral("dont_stop_the_music_enabled")).toBool(false);
+}
+
+bool QueueController::flowMode() const
+{
+    return m_queueState.value(QStringLiteral("flow_mode")).toBool(false);
+}
+
+QString QueueController::activePlaylist() const
+{
+    auto extra = m_queueState.value(QStringLiteral("extra_attributes")).toObject();
+    return extra.value(QStringLiteral("active_playlist")).toString();
+}
+
 QueueItemModel *QueueController::itemModel() const { return m_itemModel; }
 
 void QueueController::play() { sendQueueCommand(QStringLiteral("player_queues/play")); }
@@ -93,6 +109,8 @@ void QueueController::playMedia(const QString &uri, const QString &option)
 
 void QueueController::playMediaList(const QStringList &uris, const QString &option)
 {
+    if (!m_client || m_currentQueueId.isEmpty()) return;
+
     QJsonObject args;
     args[QStringLiteral("queue_id")] = m_currentQueueId;
     QJsonArray mediaArr;
@@ -100,8 +118,7 @@ void QueueController::playMediaList(const QStringList &uris, const QString &opti
         mediaArr.append(uri);
     args[QStringLiteral("media")] = mediaArr;
     args[QStringLiteral("option")] = option;
-    if (m_client)
-        m_client->sendCommand(QStringLiteral("player_queues/play_media"), args);
+    m_client->sendCommand(QStringLiteral("player_queues/play_media"), args);
 }
 
 void QueueController::playIndex(int index)

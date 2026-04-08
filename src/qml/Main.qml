@@ -17,8 +17,8 @@ Kirigami.ApplicationWindow {
                                 && pageStack.currentItem !== nowPlayingPage
 
     globalDrawer: Kirigami.GlobalDrawer {
-        title: i18n("Music Assistant")
-        titleIcon: "musicassistant-native"
+        title: ""
+        titleIcon: ""
         isMenu: false
         modal: Kirigami.Settings.isMobile
         collapsible: true
@@ -77,24 +77,6 @@ Kirigami.ApplicationWindow {
             }
         ]
 
-        header: ColumnLayout {
-            Layout.fillWidth: true
-            spacing: Kirigami.Units.smallSpacing
-
-            Kirigami.Icon {
-                source: "network-connect"
-                Layout.alignment: Qt.AlignHCenter
-                implicitWidth: Kirigami.Units.iconSizes.small
-                implicitHeight: Kirigami.Units.iconSizes.small
-                color: root.isConnected ? Kirigami.Theme.positiveTextColor : Kirigami.Theme.disabledTextColor
-            }
-            QQC2.Label {
-                text: root.isConnected ? (MaClient.serverName || i18n("Connected")) : i18n("Not connected")
-                Layout.alignment: Qt.AlignHCenter
-                font.pointSize: Kirigami.Theme.smallFont.pointSize
-                color: root.isConnected ? Kirigami.Theme.textColor : Kirigami.Theme.disabledTextColor
-            }
-        }
     }
 
     // Pre-created page instances — avoids "not placed in graphics scene" warnings
@@ -105,7 +87,13 @@ Kirigami.ApplicationWindow {
     SettingsPage { id: settingsPage; visible: false }
     AboutPage { id: aboutPage; visible: false }
 
-    pageStack.initialPage: settingsPage
+    pageStack.initialPage: MaClient.hasSavedSettings() ? nowPlayingPage : settingsPage
+
+    Component.onCompleted: {
+        if (MaClient.hasSavedSettings()) {
+            MaClient.connectWithSavedSettings()
+        }
+    }
 
     // Auto-select this device (Sendspin player) when it appears in the player list
     Connections {
@@ -167,17 +155,13 @@ Kirigami.ApplicationWindow {
             id: playerBarRow
             spacing: Kirigami.Units.smallSpacing
 
-            // Album art thumbnail
             // Album art — click to open Now Playing
             Image {
-                source: PlayerController.currentTrackImageUrl !== ""
-                    ? PlayerController.currentTrackImageUrl
-                    : ""
+                source: PlayerController.currentTrackImageUrl
                 Layout.preferredWidth: Kirigami.Units.gridUnit * 3
                 Layout.preferredHeight: Kirigami.Units.gridUnit * 3
                 fillMode: Image.PreserveAspectCrop
                 visible: PlayerController.currentTrackImageUrl !== ""
-
 
                 MouseArea {
                     anchors.fill: parent
@@ -207,11 +191,28 @@ Kirigami.ApplicationWindow {
                 }
             }
 
+            // Loading indicator
+            QQC2.BusyIndicator {
+                running: PlayerController.loading
+                visible: running
+                Layout.preferredWidth: Kirigami.Units.iconSizes.small
+                Layout.preferredHeight: Kirigami.Units.iconSizes.small
+            }
+
+            // Live badge for radio
+            Kirigami.Chip {
+                text: i18n("LIVE")
+                visible: PlayerController.mediaType === "radio" && PlayerController.isPlaying
+                closable: false
+                checkable: false
+            }
+
             // Elapsed time
             QQC2.Label {
                 text: formatTime(PlayerController.elapsed)
                 font.pointSize: Kirigami.Theme.smallFont.pointSize
                 color: Kirigami.Theme.disabledTextColor
+                visible: PlayerController.canSeek
             }
 
             // Seek slider
@@ -222,10 +223,17 @@ Kirigami.ApplicationWindow {
                 from: 0
                 to: Math.max(PlayerController.duration, 1)
                 value: pressed ? value : PlayerController.elapsed
+                visible: PlayerController.canSeek
                 onMoved: PlayerController.seek(Math.round(value))
                 onPressedChanged: {
                     if (!pressed) PlayerController.seek(Math.round(value))
                 }
+            }
+
+            // Spacer when no seek bar (radio)
+            Item {
+                Layout.fillWidth: true
+                visible: !PlayerController.canSeek
             }
 
             // Duration
@@ -233,6 +241,7 @@ Kirigami.ApplicationWindow {
                 text: PlayerController.duration > 0 ? formatTime(PlayerController.duration) : ""
                 font.pointSize: Kirigami.Theme.smallFont.pointSize
                 color: Kirigami.Theme.disabledTextColor
+                visible: PlayerController.canSeek
             }
 
             // Playback controls
@@ -258,10 +267,8 @@ Kirigami.ApplicationWindow {
             // Volume popup
             QQC2.ToolButton {
                 id: volumeButton
-                icon.name: PlayerController.volumeMuted ? "audio-volume-muted"
-                         : PlayerController.volumeLevel > 66 ? "audio-volume-high"
-                         : PlayerController.volumeLevel > 33 ? "audio-volume-medium"
-                         : "audio-volume-low"
+                visible: PlayerController.hasVolumeControl
+                icon.name: root.volumeIconName()
                 onClicked: volumePopup.open()
                 QQC2.ToolTip.text: i18n("Volume: %1%", PlayerController.volumeLevel)
                 QQC2.ToolTip.visible: hovered && !volumePopup.visible
@@ -295,7 +302,7 @@ Kirigami.ApplicationWindow {
                         }
 
                         QQC2.ToolButton {
-                            icon.name: PlayerController.volumeMuted ? "audio-volume-muted" : "audio-volume-high"
+                            icon.name: root.volumeIconName()
                             Layout.alignment: Qt.AlignHCenter
                             onClicked: PlayerController.toggleMute()
                         }
@@ -311,5 +318,12 @@ Kirigami.ApplicationWindow {
         var mins = Math.floor(seconds / 60)
         var secs = Math.floor(seconds % 60)
         return mins + ":" + (secs < 10 ? "0" : "") + secs
+    }
+
+    function volumeIconName() {
+        if (PlayerController.volumeMuted) return "audio-volume-muted"
+        if (PlayerController.volumeLevel > 66) return "audio-volume-high"
+        if (PlayerController.volumeLevel > 33) return "audio-volume-medium"
+        return "audio-volume-low"
     }
 }

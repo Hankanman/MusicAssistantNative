@@ -30,6 +30,8 @@ Mpris2PlayerAdaptor::Mpris2PlayerAdaptor(PlayerController *controller, QObject *
 {
     connect(m_controller, &PlayerController::playerStateChanged,
             this, &Mpris2PlayerAdaptor::onPlayerStateChanged);
+    connect(m_controller, &PlayerController::volumeChanged,
+            this, &Mpris2PlayerAdaptor::onPlayerStateChanged);
     connect(m_controller, &PlayerController::elapsedChanged,
             this, &Mpris2PlayerAdaptor::onElapsedChanged);
 }

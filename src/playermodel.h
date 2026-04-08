@@ -26,6 +26,9 @@ public:
         VolumeLevelRole,
         VolumeMutedRole,
         IconRole,
+        GroupMembersRole,
+        CanGroupWithRole,
+        DisplayNameRole,
     };
     Q_ENUM(Roles)
 

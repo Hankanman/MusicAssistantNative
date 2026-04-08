@@ -20,9 +20,21 @@ Kirigami.ScrollablePage {
         Layout.margins: Kirigami.Units.smallSpacing
 
         QQC2.Label {
-            text: i18n("%1 items", QueueController.itemCount)
+            text: {
+                var parts = [i18n("%1 items", QueueController.itemCount)]
+                if (QueueController.activePlaylist)
+                    parts.push(QueueController.activePlaylist)
+                return parts.join(" · ")
+            }
             Layout.fillWidth: true
             Layout.leftMargin: Kirigami.Units.smallSpacing
+        }
+
+        Kirigami.Chip {
+            text: i18n("Flow")
+            visible: QueueController.flowMode
+            closable: false
+            checkable: false
         }
 
         QQC2.ToolButton {

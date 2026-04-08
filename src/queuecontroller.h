@@ -20,6 +20,9 @@ class QueueController : public QObject
     Q_PROPERTY(int currentIndex READ currentIndex NOTIFY queueStateChanged)
     Q_PROPERTY(int itemCount READ itemCount NOTIFY queueStateChanged)
     Q_PROPERTY(QString currentItemName READ currentItemName NOTIFY queueStateChanged)
+    Q_PROPERTY(bool dontStopTheMusic READ dontStopTheMusic NOTIFY queueStateChanged)
+    Q_PROPERTY(bool flowMode READ flowMode NOTIFY queueStateChanged)
+    Q_PROPERTY(QString activePlaylist READ activePlaylist NOTIFY queueStateChanged)
     Q_PROPERTY(QueueItemModel *itemModel READ itemModel CONSTANT)
 
 public:
@@ -34,6 +37,9 @@ public:
     int currentIndex() const;
     int itemCount() const;
     QString currentItemName() const;
+    bool dontStopTheMusic() const;
+    bool flowMode() const;
+    QString activePlaylist() const;
     QueueItemModel *itemModel() const;
 
     Q_INVOKABLE void play();

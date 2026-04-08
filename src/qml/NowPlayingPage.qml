@@ -8,6 +8,7 @@ Kirigami.Page {
     id: nowPlayingPage
     title: i18n("Now Playing")
     padding: 0
+    globalToolBarStyle: Kirigami.ApplicationHeaderStyle.None
 
     // Blurred background album art
     Image {
@@ -52,7 +53,6 @@ Kirigami.Page {
             Layout.maximumWidth: Kirigami.Units.gridUnit * 22
             Layout.alignment: Qt.AlignHCenter
 
-
             Rectangle {
                 id: albumArtContainer
                 anchors.centerIn: parent
@@ -95,13 +95,25 @@ Kirigami.Page {
             Layout.fillWidth: true
             spacing: Kirigami.Units.smallSpacing
 
-            QQC2.Label {
-                text: PlayerController.currentTrackTitle || i18n("Nothing playing")
-                font.pointSize: Kirigami.Theme.defaultFont.pointSize * 1.6
-                font.weight: Font.Bold
-                horizontalAlignment: Text.AlignHCenter
-                elide: Text.ElideRight
-                Layout.fillWidth: true
+            RowLayout {
+                Layout.alignment: Qt.AlignHCenter
+                spacing: Kirigami.Units.smallSpacing
+
+                QQC2.BusyIndicator {
+                    running: PlayerController.loading
+                    visible: running
+                    Layout.preferredWidth: Kirigami.Units.iconSizes.small
+                    Layout.preferredHeight: Kirigami.Units.iconSizes.small
+                }
+
+                QQC2.Label {
+                    text: PlayerController.currentTrackTitle || i18n("Nothing playing")
+                    font.pointSize: Kirigami.Theme.defaultFont.pointSize * 1.6
+                    font.weight: Font.Bold
+                    horizontalAlignment: Text.AlignHCenter
+                    elide: Text.ElideRight
+                    Layout.fillWidth: true
+                }
             }
             QQC2.Label {
                 text: PlayerController.currentTrackArtist
@@ -112,23 +124,35 @@ Kirigami.Page {
                 Layout.fillWidth: true
                 visible: text !== ""
             }
-            QQC2.Label {
-                text: PlayerController.currentTrackAlbum
-                font.pointSize: Kirigami.Theme.smallFont.pointSize
-                horizontalAlignment: Text.AlignHCenter
-                opacity: 0.5
-                elide: Text.ElideRight
-                Layout.fillWidth: true
-                visible: text !== ""
+            RowLayout {
+                Layout.alignment: Qt.AlignHCenter
+                spacing: Kirigami.Units.smallSpacing
+                visible: PlayerController.currentTrackAlbum !== "" || PlayerController.mediaType === "radio"
+
+                QQC2.Label {
+                    text: PlayerController.currentTrackAlbum
+                    font.pointSize: Kirigami.Theme.smallFont.pointSize
+                    horizontalAlignment: Text.AlignHCenter
+                    opacity: 0.5
+                    elide: Text.ElideRight
+                    visible: text !== ""
+                }
+                Kirigami.Chip {
+                    text: i18n("LIVE")
+                    visible: PlayerController.mediaType === "radio" && PlayerController.isPlaying
+                    closable: false
+                    checkable: false
+                }
             }
         }
 
-        // Seek bar
+        // Seek bar (hidden for radio/live streams)
         ColumnLayout {
             Layout.fillWidth: true
             Layout.leftMargin: Kirigami.Units.gridUnit
             Layout.rightMargin: Kirigami.Units.gridUnit
             spacing: 0
+            visible: PlayerController.canSeek
 
             QQC2.Slider {
                 id: seekSlider
@@ -168,6 +192,7 @@ Kirigami.Page {
             QQC2.ToolButton {
                 icon.name: "media-playlist-shuffle"
                 checked: QueueController.shuffleEnabled
+                visible: PlayerController.mediaType !== "radio"
                 onClicked: QueueController.setShuffle(!QueueController.shuffleEnabled)
                 QQC2.ToolTip.text: i18n("Shuffle")
                 QQC2.ToolTip.visible: hovered
@@ -207,6 +232,7 @@ Kirigami.Page {
                     }
                 }
                 checked: QueueController.repeatMode !== "off"
+                visible: PlayerController.mediaType !== "radio"
                 onClicked: {
                     switch (QueueController.repeatMode) {
                     case "off": QueueController.setRepeat("all"); break
@@ -219,6 +245,39 @@ Kirigami.Page {
             }
         }
 
+        // Volume control
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.leftMargin: Kirigami.Units.gridUnit * 2
+            Layout.rightMargin: Kirigami.Units.gridUnit * 2
+            spacing: Kirigami.Units.smallSpacing
+            visible: PlayerController.hasVolumeControl
+
+            QQC2.ToolButton {
+                icon.name: nowPlayingPage.volumeIconName()
+                onClicked: PlayerController.toggleMute()
+                visible: PlayerController.hasMuteControl
+                QQC2.ToolTip.text: PlayerController.volumeMuted ? i18n("Unmute") : i18n("Mute")
+                QQC2.ToolTip.visible: hovered
+            }
+
+            QQC2.Slider {
+                Layout.fillWidth: true
+                from: 0
+                to: 100
+                value: PlayerController.volumeLevel
+                onMoved: PlayerController.setVolume(Math.round(value))
+            }
+
+            QQC2.Label {
+                text: PlayerController.volumeLevel + "%"
+                font.pointSize: Kirigami.Theme.smallFont.pointSize
+                opacity: 0.6
+                Layout.preferredWidth: Kirigami.Units.gridUnit * 2.5
+                horizontalAlignment: Text.AlignRight
+            }
+        }
+
         Item { Layout.fillHeight: true; Layout.maximumHeight: Kirigami.Units.gridUnit * 2 }
     }
 
@@ -227,5 +286,12 @@ Kirigami.Page {
         var mins = Math.floor(seconds / 60)
         var secs = Math.floor(seconds % 60)
         return mins + ":" + (secs < 10 ? "0" : "") + secs
+    }
+
+    function volumeIconName() {
+        if (PlayerController.volumeMuted) return "audio-volume-muted"
+        if (PlayerController.volumeLevel > 66) return "audio-volume-high"
+        if (PlayerController.volumeLevel > 33) return "audio-volume-medium"
+        return "audio-volume-low"
     }
 }

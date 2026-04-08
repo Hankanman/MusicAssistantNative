@@ -1,6 +1,16 @@
 #include "playercontroller.h"
 #include "maclient.h"
+#include "sendspinclient.h"
 #include <QDateTime>
+#include <QJsonArray>
+
+static QStringList jsonArrayToStringList(const QJsonArray &arr)
+{
+    QStringList result;
+    result.reserve(arr.size());
+    for (const auto &v : arr) result.append(v.toString());
+    return result;
+}
 
 PlayerController::PlayerController(QObject *parent)
     : QObject(parent)
@@ -45,15 +55,8 @@ QString PlayerController::playbackState() const
     return m_playerState.value(QStringLiteral("playback_state")).toString(QStringLiteral("idle"));
 }
 
-int PlayerController::volumeLevel() const
-{
-    return m_playerState.value(QStringLiteral("volume_level")).toInt(0);
-}
-
-bool PlayerController::volumeMuted() const
-{
-    return m_playerState.value(QStringLiteral("volume_muted")).toBool(false);
-}
+int PlayerController::volumeLevel() const { return m_volumeLevel; }
+bool PlayerController::volumeMuted() const { return m_volumeMuted; }
 
 bool PlayerController::powered() const
 {
@@ -82,6 +85,50 @@ QString PlayerController::currentTrackImageUrl() const
 {
     auto media = m_playerState.value(QStringLiteral("current_media")).toObject();
     return media.value(QStringLiteral("image_url")).toString();
+}
+
+QString PlayerController::mediaType() const
+{
+    auto media = m_playerState.value(QStringLiteral("current_media")).toObject();
+    return media.value(QStringLiteral("media_type")).toString();
+}
+
+bool PlayerController::canSeek() const
+{
+    // Radio streams aren't seekable
+    return mediaType() != QStringLiteral("radio") && duration() > 0;
+}
+
+bool PlayerController::hasVolumeControl() const
+{
+    return hasFeature(QStringLiteral("volume_set"));
+}
+
+bool PlayerController::hasMuteControl() const
+{
+    return hasFeature(QStringLiteral("volume_mute"));
+}
+
+bool PlayerController::loading() const { return m_loading; }
+
+QString PlayerController::activeSource() const
+{
+    return m_playerState.value(QStringLiteral("active_source")).toString();
+}
+
+QJsonArray PlayerController::sourceList() const
+{
+    return m_playerState.value(QStringLiteral("source_list")).toArray();
+}
+
+QStringList PlayerController::groupMembers() const
+{
+    return jsonArrayToStringList(m_playerState.value(QStringLiteral("group_members")).toArray());
+}
+
+QStringList PlayerController::canGroupWith() const
+{
+    return jsonArrayToStringList(m_playerState.value(QStringLiteral("can_group_with")).toArray());
 }
 
 int PlayerController::elapsed() const
@@ -123,8 +170,24 @@ void PlayerController::seek(int position)
     sendPlayerCommand(QStringLiteral("players/cmd/seek"), {{QStringLiteral("position"), position}});
 }
 
+void PlayerController::setSendspinClient(SendspinClient *sendspin)
+{
+    m_sendspin = sendspin;
+}
+
 void PlayerController::setVolume(int level)
 {
+    level = qBound(0, level, 100);
+    if (m_volumeLevel == level) return;
+
+    m_volumeLevel = level;
+    Q_EMIT volumeChanged();
+
+    // Directly update local audio if the current player is the Sendspin player
+    if (isCurrentPlayerSendspin()) {
+        m_sendspin->setVolume(level);
+    }
+
     sendPlayerCommand(QStringLiteral("players/cmd/volume_set"), {{QStringLiteral("volume_level"), level}});
 }
 
@@ -133,13 +196,34 @@ void PlayerController::volumeDown() { sendPlayerCommand(QStringLiteral("players/
 
 void PlayerController::toggleMute()
 {
+    m_volumeMuted = !m_volumeMuted;
+    Q_EMIT volumeChanged();
+
+    if (isCurrentPlayerSendspin()) {
+        m_sendspin->setMuted(m_volumeMuted);
+    }
+
     sendPlayerCommand(QStringLiteral("players/cmd/volume_mute"),
-                      {{QStringLiteral("muted"), !volumeMuted()}});
+                      {{QStringLiteral("muted"), m_volumeMuted}});
 }
 
 void PlayerController::setPower(bool on)
 {
     sendPlayerCommand(QStringLiteral("players/cmd/power"), {{QStringLiteral("powered"), on}});
+}
+
+bool PlayerController::isCurrentPlayerSendspin() const
+{
+    return m_sendspin && m_currentPlayerId.contains(m_sendspin->playerId());
+}
+
+bool PlayerController::hasFeature(const QString &feature) const
+{
+    const auto features = m_playerState.value(QStringLiteral("supported_features")).toArray();
+    for (const auto &f : features) {
+        if (f.toString() == feature) return true;
+    }
+    return false;
 }
 
 void PlayerController::sendPlayerCommand(const QString &cmd, const QJsonObject &extraArgs)
@@ -163,6 +247,9 @@ void PlayerController::fetchPlayerState()
         [this](const QJsonValue &result, const QString &error) {
             if (error.isEmpty() && result.isObject()) {
                 m_playerState = result.toObject();
+                m_volumeLevel = m_playerState.value(QStringLiteral("volume_level")).toInt(0);
+                m_volumeMuted = m_playerState.value(QStringLiteral("volume_muted")).toBool(false);
+                Q_EMIT volumeChanged();
                 Q_EMIT playerStateChanged();
                 // Start/stop interpolation timer based on playback state
                 if (isPlaying()) m_interpolateTimer->start();
@@ -214,6 +301,13 @@ void PlayerController::onEvent(const QString &event, const QString &objectId, co
             m_duration = d;
             Q_EMIT playerStateChanged();
         }
+        // Loading state from queue extra_attributes
+        auto extra = data.value(QStringLiteral("extra_attributes")).toObject();
+        bool newLoading = extra.value(QStringLiteral("play_action_in_progress")).toBool(false);
+        if (newLoading != m_loading) {
+            m_loading = newLoading;
+            Q_EMIT loadingChanged();
+        }
         return;
     }
 
@@ -221,6 +315,18 @@ void PlayerController::onEvent(const QString &event, const QString &objectId, co
 
     if (event == QStringLiteral("player_updated")) {
         m_playerState = data;
+
+        int vol = data.value(QStringLiteral("volume_level")).toInt(m_volumeLevel);
+        bool isSendspin = isCurrentPlayerSendspin();
+        // Server doesn't track mute state for Sendspin players — keep local value
+        bool muted = isSendspin ? m_volumeMuted
+                                : data.value(QStringLiteral("volume_muted")).toBool(m_volumeMuted);
+        if (vol != m_volumeLevel || muted != m_volumeMuted) {
+            m_volumeLevel = vol;
+            m_volumeMuted = muted;
+            Q_EMIT volumeChanged();
+        }
+
         // Pick up duration from current_media if queue hasn't provided it
         auto media = data.value(QStringLiteral("current_media")).toObject();
         int d = media.value(QStringLiteral("duration")).toInt(0);

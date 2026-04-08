@@ -64,10 +64,11 @@ Kirigami.ScrollablePage {
                     RowLayout {
                         spacing: Kirigami.Units.smallSpacing
                         QQC2.Label {
-                            text: model.name
+                            text: model.displayName || model.name
                             font.bold: model.playerId === PlayerController.currentPlayerId
                             elide: Text.ElideRight
                             Layout.fillWidth: true
+                            opacity: model.available ? 1.0 : 0.5
                         }
                         Kirigami.Chip {
                             text: i18n("Active")
@@ -83,10 +84,13 @@ Kirigami.ScrollablePage {
                                 parts.push(model.playbackState)
                             }
                             if (!model.available) parts.push(i18n("unavailable"))
+                            if (model.groupMembers && model.groupMembers.length > 0) {
+                                parts.push(i18n("group: %1 members", model.groupMembers.length))
+                            }
                             return parts.join(" · ")
                         }
                         font.pointSize: Kirigami.Theme.smallFont.pointSize
-                        color: Kirigami.Theme.disabledTextColor
+                        color: model.available ? Kirigami.Theme.disabledTextColor : Kirigami.Theme.negativeTextColor
                         elide: Text.ElideRight
                         Layout.fillWidth: true
                     }

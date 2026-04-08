@@ -29,6 +29,11 @@
   </provides>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="2026.04.08" date="2026-04-08">
+      <description>
+        <p>Volume control fixes, media type awareness (radio/live), loading indicators, feature-gated controls, queue metadata</p>
+      </description>
+    </release>
     <release version="2026.03.30" date="2026-03-30">
       <description>
         <p>UI overhaul: detail pages, MPRIS2, Sendspin audio, FormCard settings, keyboard shortcuts</p>

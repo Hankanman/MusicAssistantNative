@@ -3,8 +3,8 @@
 #include <QObject>
 #include <QMediaPlayer>
 #include <QAudioOutput>
-#include <QTemporaryFile>
-#include <QBuffer>
+
+class StreamBuffer;
 
 class AudioDecoder : public QObject
 {
@@ -32,7 +32,7 @@ private:
 
     QMediaPlayer *m_player;
     QAudioOutput *m_audioOutput;
-    QTemporaryFile *m_tempFile = nullptr;
+    StreamBuffer *m_streamBuffer = nullptr;
     QString m_codec;
     int m_sampleRate = 44100;
     bool m_playing = false;

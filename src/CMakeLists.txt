@@ -9,6 +9,7 @@ add_executable(musicassistant-native
     queueitemmodel.cpp
     sendspinclient.cpp
     audiodecoder.cpp
+    streambuffer.cpp
     mpris2player.cpp
 )
 

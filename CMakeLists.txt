@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(musicassistant-native VERSION 2026.03.30 LANGUAGES CXX)
+project(musicassistant-native VERSION 2026.04.08 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

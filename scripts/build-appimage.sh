@@ -9,7 +9,7 @@
 set -euo pipefail
 
 APPNAME="MusicAssistantNative"
-VERSION="2026.03.30"
+VERSION="2026.04.08"
 SRCDIR="$(cd "$(dirname "$0")/.." && pwd)"
 BUILDDIR="${SRCDIR}/build-appimage"
 APPDIR="${BUILDDIR}/AppDir"

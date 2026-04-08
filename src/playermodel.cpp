@@ -1,6 +1,14 @@
 #include "playermodel.h"
 #include "maclient.h"
 
+static QStringList jsonArrayToStringList(const QJsonArray &arr)
+{
+    QStringList result;
+    result.reserve(arr.size());
+    for (const auto &v : arr) result.append(v.toString());
+    return result;
+}
+
 PlayerModel::PlayerModel(QObject *parent)
     : QAbstractListModel(parent)
 {
@@ -51,6 +59,13 @@ QVariant PlayerModel::data(const QModelIndex &index, int role) const
         return player.value(QStringLiteral("volume_muted")).toBool(false);
     case IconRole:
         return player.value(QStringLiteral("icon")).toString(QStringLiteral("speaker"));
+    case GroupMembersRole:
+        return jsonArrayToStringList(player.value(QStringLiteral("group_members")).toArray());
+    case CanGroupWithRole:
+        return jsonArrayToStringList(player.value(QStringLiteral("can_group_with")).toArray());
+    case DisplayNameRole:
+        return player.value(QStringLiteral("display_name")).toString(
+            player.value(QStringLiteral("name")).toString());
     }
 
     return {};
@@ -69,6 +84,9 @@ QHash<int, QByteArray> PlayerModel::roleNames() const
         {VolumeLevelRole, "volumeLevel"},
         {VolumeMutedRole, "volumeMuted"},
         {IconRole, "icon"},
+        {GroupMembersRole, "groupMembers"},
+        {CanGroupWithRole, "canGroupWith"},
+        {DisplayNameRole, "displayName"},
     };
 }
 

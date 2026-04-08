@@ -1,7 +1,6 @@
 #include "audiodecoder.h"
+#include "streambuffer.h"
 #include <QDebug>
-#include <QDir>
-#include <QStandardPaths>
 
 AudioDecoder::AudioDecoder(QObject *parent)
     : QObject(parent)
@@ -35,19 +34,8 @@ void AudioDecoder::start(const QString &codec, int sampleRate, int channels, int
     m_bytesWritten = 0;
     m_playbackStarted = false;
 
-    // Create temp file for the audio stream
-    QString suffix = codec == QStringLiteral("flac") ? QStringLiteral(".flac")
-                   : codec == QStringLiteral("opus") ? QStringLiteral(".opus")
-                   : QStringLiteral(".raw");
-
-    m_tempFile = new QTemporaryFile(QDir::tempPath() + QStringLiteral("/ma_audio_XXXXXX") + suffix, this);
-    m_tempFile->setAutoRemove(true);
-    if (!m_tempFile->open()) {
-        qWarning() << "AudioDecoder: failed to create temp file:" << m_tempFile->errorString();
-        delete m_tempFile;
-        m_tempFile = nullptr;
-        return;
-    }
+    m_streamBuffer = new StreamBuffer(this);
+    m_streamBuffer->open(QIODevice::ReadOnly);
 
     m_playing = true;
 }
@@ -55,11 +43,13 @@ void AudioDecoder::start(const QString &codec, int sampleRate, int channels, int
 void AudioDecoder::stop()
 {
     m_player->stop();
+    m_player->setSource(QUrl());
 
-    if (m_tempFile) {
-        m_tempFile->close();
-        delete m_tempFile;
-        m_tempFile = nullptr;
+    if (m_streamBuffer) {
+        m_streamBuffer->finish();
+        m_streamBuffer->close();
+        m_streamBuffer->deleteLater();
+        m_streamBuffer = nullptr;
     }
 
     m_playbackStarted = false;
@@ -72,10 +62,9 @@ void AudioDecoder::stop()
 
 void AudioDecoder::feedData(const QByteArray &encodedData)
 {
-    if (!m_tempFile || !m_tempFile->isOpen()) return;
+    if (!m_streamBuffer) return;
 
-    m_tempFile->write(encodedData);
-    m_tempFile->flush();
+    m_streamBuffer->feedData(encodedData);
     m_bytesWritten += encodedData.size();
 
     // Start playback after accumulating ~100KB of data (enough for smooth start)
@@ -86,9 +75,9 @@ void AudioDecoder::feedData(const QByteArray &encodedData)
 
 void AudioDecoder::startPlaybackIfReady()
 {
-    if (m_playbackStarted || !m_tempFile) return;
+    if (m_playbackStarted || !m_streamBuffer) return;
     m_playbackStarted = true;
-    m_player->setSource(QUrl::fromLocalFile(m_tempFile->fileName()));
+    m_player->setSourceDevice(m_streamBuffer);
     m_player->play();
     Q_EMIT playbackStarted();
 }
@@ -107,5 +96,7 @@ void AudioDecoder::onMediaStatusChanged(QMediaPlayer::MediaStatus status)
 {
     if (status == QMediaPlayer::InvalidMedia) {
         qWarning() << "AudioDecoder: invalid media - codec:" << m_codec;
+    } else if (status == QMediaPlayer::EndOfMedia) {
+        qDebug() << "AudioDecoder: end of media reached";
     }
 }

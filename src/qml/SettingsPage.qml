@@ -146,8 +146,5 @@ FormCard.FormCardPage {
     Component.onCompleted: {
         MaClient.loadSettings()
         serverUrlField.text = MaClient.serverUrl || ""
-        if (MaClient.hasSavedSettings()) {
-            MaClient.connectWithSavedSettings()
-        }
     }
 }
