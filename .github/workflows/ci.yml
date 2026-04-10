@@ -178,5 +178,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           tag="${GITHUB_REF#refs/tags/}"
-          find artifacts -type f \( -name '*.rpm' -o -name '*.deb' -o -name '*.AppImage' \) \
-            -exec gh release upload "$tag" {} --repo "$GITHUB_REPOSITORY" --clobber \;
+          if ! gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$tag" --repo "$GITHUB_REPOSITORY" \
+              --title "$tag" --generate-notes
+          fi
+          find artifacts -type f \( -name '*.rpm' -o -name '*.deb' -o -name '*.AppImage' \) -print0 |
+            xargs -0 -I{} gh release upload "$tag" {} --repo "$GITHUB_REPOSITORY" --clobber
