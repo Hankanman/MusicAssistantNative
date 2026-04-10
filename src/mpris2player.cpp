@@ -170,12 +170,13 @@ void Mpris2PlayerAdaptor::onElapsedChanged()
     if (deltaMicros < 900000LL) {
         return;
     }
+    qlonglong oldPos = m_lastEmittedPosition;
     m_lastEmittedPosition = pos;
 
     // MPRIS2 spec says Position is not emitted via PropertiesChanged;
     // instead clients read it on demand. We only emit Seeked when there's
     // a discontinuity (jump of more than 2 seconds).
-    if (deltaMicros > 2000000LL && m_lastEmittedPosition >= 0) {
+    if (deltaMicros > 2000000LL && oldPos >= 0) {
         Q_EMIT Seeked(pos);
     }
 }

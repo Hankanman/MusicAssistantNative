@@ -42,7 +42,7 @@ SendspinClient::SendspinClient(QObject *parent)
 
 SendspinClient::~SendspinClient()
 {
-    disconnect();
+    SendspinClient::disconnect();
 }
 
 bool SendspinClient::isRegistered() const { return m_registered; }

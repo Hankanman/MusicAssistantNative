@@ -49,6 +49,7 @@ target_link_libraries(musicassistant-native PRIVATE
     KF6::Notifications
     KF6::WindowSystem
     KF6::IconThemes
+    PkgConfig::FLAC
 )
 
 install(TARGETS musicassistant-native ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})

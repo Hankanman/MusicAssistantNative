@@ -5,9 +5,9 @@
 #include <QMutex>
 
 /**
- * Sequential QIODevice for streaming audio data to QMediaPlayer.
- * Data is appended via feedData() and consumed by QMediaPlayer reads.
- * Reports as sequential so QMediaPlayer doesn't try to determine file size upfront.
+ * Sequential QIODevice for streaming audio data to QAudioSink.
+ * Data is appended via feedData() and consumed by QAudioSink reads.
+ * Reports as sequential so the consumer doesn't try to determine size upfront.
  */
 class StreamBuffer : public QIODevice
 {

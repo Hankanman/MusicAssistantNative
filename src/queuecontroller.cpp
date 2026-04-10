@@ -12,6 +12,12 @@ void QueueController::setClient(MaClient *client)
 {
     m_client = client;
     connect(m_client, &MaClient::eventReceived, this, &QueueController::onEvent);
+    connect(m_client, &MaClient::authenticatedChanged, this, [this]() {
+        if (m_client->isAuthenticated() && !m_currentQueueId.isEmpty()) {
+            fetchQueueState();
+            fetchQueueItems();
+        }
+    });
 }
 
 QString QueueController::currentQueueId() const { return m_currentQueueId; }

@@ -1,5 +1,5 @@
 Name:           musicassistant-native
-Version:        2026.04.08
+Version:        2026.04.10
 Release:        1%{?dist}
 Summary:        A native KDE client for Music Assistant
 
@@ -28,12 +28,14 @@ BuildRequires:  cmake(KF6DBusAddons)
 BuildRequires:  cmake(KF6Notifications)
 BuildRequires:  cmake(KF6WindowSystem)
 BuildRequires:  cmake(KF6IconThemes)
+BuildRequires:  pkgconfig(flac)
 BuildRequires:  desktop-file-utils
 BuildRequires:  libappstream-glib
 
 Requires:       kf6-kirigami
 Requires:       qt6-qtwebsockets
 Requires:       qt6-qtdeclarative
+Requires:       flac-libs
 
 %description
 Music Assistant Native is a native KDE Plasma desktop application for controlling

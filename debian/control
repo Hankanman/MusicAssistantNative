@@ -19,6 +19,7 @@ Build-Depends:
  libkf6notifications-dev (>= 6.0),
  libkf6windowsystem-dev (>= 6.0),
  libkf6iconthemes-dev (>= 6.0),
+ libflac-dev,
 Standards-Version: 4.6.2
 Homepage: https://github.com/music-assistant
 Rules-Requires-Root: no

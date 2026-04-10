@@ -146,5 +146,9 @@ FormCard.FormCardPage {
     Component.onCompleted: {
         MaClient.loadSettings()
         serverUrlField.text = MaClient.serverUrl || ""
+        // Pre-populate token so manual reconnect works without re-entering it
+        if (MaClient.token.length > 0) {
+            connectAndAuth.token = MaClient.token
+        }
     }
 }

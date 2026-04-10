@@ -41,6 +41,7 @@ jobs:
             kf6-ki18n-devel kf6-kcoreaddons-devel kf6-kconfig-devel \
             kf6-kdbusaddons-devel kf6-knotifications-devel \
             kf6-kwindowsystem-devel kf6-kiconthemes-devel \
+            flac-devel \
             desktop-file-utils libappstream-glib rpm-build
 
       - name: Configure and build
@@ -84,6 +85,7 @@ jobs:
             libkirigami-dev libkf6i18n-dev libkf6coreaddons-dev \
             libkf6config-dev libkf6dbusaddons-dev libkf6notifications-dev \
             libkf6windowsystem-dev libkf6iconthemes-dev \
+            libflac-dev \
             dpkg-dev debhelper fakeroot
 
       - name: Build DEB
@@ -115,6 +117,7 @@ jobs:
             libkirigami-dev libkf6i18n-dev libkf6coreaddons-dev \
             libkf6config-dev libkf6dbusaddons-dev libkf6notifications-dev \
             libkf6windowsystem-dev libkf6iconthemes-dev \
+            libflac-dev \
             qml6-module-org-kde-kirigami \
             qml6-module-qtquick-controls qml6-module-qtquick-layouts \
             wget file patchelf ca-certificates

@@ -17,7 +17,7 @@ MaClient::MaClient(QObject *parent)
 
 MaClient::~MaClient()
 {
-    disconnect();
+    MaClient::disconnect();
 }
 
 bool MaClient::isConnected() const { return m_connected; }
@@ -63,6 +63,10 @@ void MaClient::disconnect()
     m_heartbeatTimer.stop();
     if (m_socket.state() != QAbstractSocket::UnconnectedState) {
         m_socket.close();
+    }
+    if (m_serverReady) {
+        m_serverReady = false;
+        Q_EMIT serverReadyChanged();
     }
     if (m_connected) {
         m_connected = false;
@@ -124,6 +128,11 @@ void MaClient::loginWithCredentials(const QString &username, const QString &pass
 
 QString MaClient::sendCommand(const QString &command, const QJsonObject &args, ResponseCallback callback)
 {
+    if (!m_connected) {
+        if (callback) callback(QJsonValue(), QStringLiteral("Not connected"));
+        return {};
+    }
+
     QString msgId = QString::number(m_nextMessageId++);
 
     QJsonObject msg;

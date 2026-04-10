@@ -120,7 +120,8 @@ Kirigami.ApplicationWindow {
 
     function switchPage(page) {
         if (pageStack.currentItem !== page) {
-            pageStack.replace(page)
+            pageStack.clear()
+            pageStack.push(page)
         }
     }
 

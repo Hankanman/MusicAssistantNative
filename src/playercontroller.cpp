@@ -214,7 +214,7 @@ void PlayerController::setPower(bool on)
 
 bool PlayerController::isCurrentPlayerSendspin() const
 {
-    return m_sendspin && m_currentPlayerId.contains(m_sendspin->playerId());
+    return m_sendspin && m_currentPlayerId == (QStringLiteral("up") + m_sendspin->playerId());
 }
 
 bool PlayerController::hasFeature(const QString &feature) const
@@ -242,9 +242,12 @@ void PlayerController::fetchPlayerState()
 {
     if (!m_client || m_currentPlayerId.isEmpty() || !m_client->isAuthenticated()) return;
 
+    QString playerId = m_currentPlayerId;
+
     m_client->sendCommand(QStringLiteral("players/get"),
-        {{QStringLiteral("player_id"), m_currentPlayerId}},
-        [this](const QJsonValue &result, const QString &error) {
+        {{QStringLiteral("player_id"), playerId}},
+        [this, playerId](const QJsonValue &result, const QString &error) {
+            if (m_currentPlayerId != playerId) return; // player changed since request
             if (error.isEmpty() && result.isObject()) {
                 m_playerState = result.toObject();
                 m_volumeLevel = m_playerState.value(QStringLiteral("volume_level")).toInt(0);
@@ -259,8 +262,9 @@ void PlayerController::fetchPlayerState()
 
     // Fetch queue for elapsed and duration
     m_client->sendCommand(QStringLiteral("player_queues/get"),
-        {{QStringLiteral("queue_id"), m_currentPlayerId}},
-        [this](const QJsonValue &result, const QString &error) {
+        {{QStringLiteral("queue_id"), playerId}},
+        [this, playerId](const QJsonValue &result, const QString &error) {
+            if (m_currentPlayerId != playerId) return; // player changed since request
             if (error.isEmpty() && result.isObject()) {
                 auto q = result.toObject();
                 m_serverElapsed = q.value(QStringLiteral("elapsed_time")).toDouble(m_serverElapsed);

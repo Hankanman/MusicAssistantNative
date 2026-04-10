@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(musicassistant-native VERSION 2026.04.08 LANGUAGES CXX)
+project(musicassistant-native VERSION 2026.04.10 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -33,6 +33,9 @@ find_package(Qt6 ${QT_MIN_VERSION} REQUIRED COMPONENTS
     DBus
     Qml
 )
+
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(FLAC REQUIRED IMPORTED_TARGET flac)
 
 find_package(KF6 ${KF_MIN_VERSION} REQUIRED COMPONENTS
     Kirigami

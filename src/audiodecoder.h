@@ -1,8 +1,11 @@
 #pragma once
 
 #include <QObject>
-#include <QMediaPlayer>
-#include <QAudioOutput>
+#include <QAudioSink>
+#include <QAudioFormat>
+#include <QByteArray>
+#include <QMutex>
+#include <FLAC/stream_decoder.h>
 
 class StreamBuffer;
 
@@ -24,18 +27,34 @@ Q_SIGNALS:
     void playbackStarted();
     void playbackStopped();
 
-private Q_SLOTS:
-    void onMediaStatusChanged(QMediaPlayer::MediaStatus status);
-
 private:
-    void startPlaybackIfReady();
+    void processAvailableData();
+    void initFlacDecoder();
+    void cleanupFlacDecoder();
 
-    QMediaPlayer *m_player;
-    QAudioOutput *m_audioOutput;
-    StreamBuffer *m_streamBuffer = nullptr;
-    QString m_codec;
+    // libFLAC callbacks
+    static FLAC__StreamDecoderReadStatus flacReadCallback(
+        const FLAC__StreamDecoder *decoder, FLAC__byte buffer[],
+        size_t *bytes, void *clientData);
+    static FLAC__StreamDecoderWriteStatus flacWriteCallback(
+        const FLAC__StreamDecoder *decoder, const FLAC__Frame *frame,
+        const FLAC__int32 *const buffer[], void *clientData);
+    static void flacErrorCallback(
+        const FLAC__StreamDecoder *decoder,
+        FLAC__StreamDecoderErrorStatus status, void *clientData);
+
+    FLAC__StreamDecoder *m_flacDecoder = nullptr;
+    QAudioSink *m_audioSink = nullptr;
+    StreamBuffer *m_pcmBuffer = nullptr;
+    float m_volume = 0.8f;
+
+    // FLAC input buffer (fed by WebSocket frames)
+    QByteArray m_flacInput;
+    qint64 m_flacReadPos = 0;
+    QMutex m_inputMutex;
+
     int m_sampleRate = 44100;
+    int m_channels = 2;
+    int m_bitDepth = 16;
     bool m_playing = false;
-    bool m_playbackStarted = false;
-    int m_bytesWritten = 0;
 };

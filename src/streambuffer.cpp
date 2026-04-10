@@ -44,7 +44,7 @@ qint64 StreamBuffer::readData(char *data, qint64 maxSize)
         // If stream is finished, signal EOF
         if (m_finished)
             return -1;
-        // No data yet, return 0 (QMediaPlayer will wait for readyRead)
+        // No data yet — QAudioSink will retry on readyRead
         return 0;
     }
 
