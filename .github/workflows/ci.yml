@@ -54,10 +54,11 @@ jobs:
 
       - name: Build RPM
         run: |
+          VERSION=$(awk '/^Version:/ {print $2}' musicassistant-native.spec)
           mkdir -p ~/rpmbuild/{SOURCES,SPECS}
-          tar --transform 's,^\.,musicassistant-native-2026.04.08,' \
+          tar --transform "s,^\.,musicassistant-native-${VERSION}," \
             --exclude='build' --exclude='.git' --exclude='*.rpm' \
-            -czf ~/rpmbuild/SOURCES/musicassistant-native-2026.04.08.tar.gz .
+            -czf ~/rpmbuild/SOURCES/musicassistant-native-${VERSION}.tar.gz .
           cp musicassistant-native.spec ~/rpmbuild/SPECS/
           rpmbuild -bb ~/rpmbuild/SPECS/musicassistant-native.spec
 
@@ -138,10 +139,10 @@ jobs:
         env:
           QMAKE: qmake6
           QML_SOURCES_PATHS: src/qml
-          VERSION: "2026.04.08"
           APPIMAGE_EXTRACT_AND_RUN: "1"
           NO_STRIP: "1"
         run: |
+          export VERSION=$(awk '/^Version:/ {print $2}' musicassistant-native.spec)
           # Fix desktop file icon reference for AppImage
           sed -i 's|Icon=multimedia-player|Icon=musicassistant-native|' \
             AppDir/usr/share/applications/io.github.musicassistant.native.desktop
