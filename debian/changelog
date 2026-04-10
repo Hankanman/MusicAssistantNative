@@ -1,3 +1,9 @@
+musicassistant-native (2026.04.10-1) unstable; urgency=low
+
+  * Native libFLAC decoder replacing QMediaPlayer pipeline
+
+ -- Sebastian Burrell <sebburrell@outlook.com>  Fri, 10 Apr 2026 12:00:00 +0000
+
 musicassistant-native (2026.04.08-1) unstable; urgency=low
 
   * Initial release
