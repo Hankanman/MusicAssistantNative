@@ -33,6 +33,8 @@ BuildRequires:  desktop-file-utils
 BuildRequires:  libappstream-glib
 
 Requires:       kf6-kirigami
+Requires:       kf6-kirigami-addons
+Requires:       kf6-qqc2-desktop-style
 Requires:       qt6-qtwebsockets
 Requires:       qt6-qtdeclarative
 Requires:       flac-libs

@@ -51,7 +51,19 @@ DESTDIR="${APPDIR}" cmake --install "${BUILDDIR}/cmake"
 echo "=== Creating AppImage ==="
 export QMAKE=qmake6
 export QML_SOURCES_PATHS="${SRCDIR}/src/qml"
+export APPIMAGE_EXTRACT_AND_RUN=1
 export VERSION
+
+# Ensure Kirigami desktop style and addons modules are bundled into AppDir
+mkdir -p "${APPDIR}/usr/qml/org/kde"
+for qml_path in /usr/lib/x86_64-linux-gnu/qt6/qml /usr/lib64/qt6/qml /usr/lib/qt6/qml; do
+    if [ -d "${qml_path}/org/kde/desktop" ]; then
+        cp -r "${qml_path}/org/kde/desktop" "${APPDIR}/usr/qml/org/kde/" 2>/dev/null || true
+    fi
+    if [ -d "${qml_path}/org/kde/kirigamiaddons" ]; then
+        cp -r "${qml_path}/org/kde/kirigamiaddons" "${APPDIR}/usr/qml/org/kde/" 2>/dev/null || true
+    fi
+done
 
 cd "${BUILDDIR}"
 "${TOOLS_DIR}/linuxdeploy" \

@@ -120,7 +120,11 @@ jobs:
             libkf6windowsystem-dev libkf6iconthemes-dev \
             libflac-dev \
             qml6-module-org-kde-kirigami \
+            qml6-module-org-kde-kirigamiaddons-formcard \
+            qml6-module-org-kde-desktop \
             qml6-module-qtquick-controls qml6-module-qtquick-layouts \
+            qml6-module-qtquick-templates qml6-module-qtquick-effects \
+            qt6-wayland \
             wget file patchelf ca-certificates
 
       - name: Build and install to AppDir
@@ -139,6 +143,7 @@ jobs:
         env:
           QMAKE: qmake6
           QML_SOURCES_PATHS: src/qml
+          QML_MODULES_PATHS: /usr/lib/x86_64-linux-gnu/qt6/qml
           APPIMAGE_EXTRACT_AND_RUN: "1"
           NO_STRIP: "1"
         run: |
@@ -146,6 +151,10 @@ jobs:
           # Fix desktop file icon reference for AppImage
           sed -i 's|Icon=multimedia-player|Icon=musicassistant-native|' \
             AppDir/usr/share/applications/io.github.musicassistant.native.desktop
+          # Ensure Kirigami desktop style and addons modules are bundled into AppDir
+          mkdir -p AppDir/usr/qml/org/kde
+          cp -r /usr/lib/x86_64-linux-gnu/qt6/qml/org/kde/desktop AppDir/usr/qml/org/kde/ 2>/dev/null || true
+          cp -r /usr/lib/x86_64-linux-gnu/qt6/qml/org/kde/kirigamiaddons AppDir/usr/qml/org/kde/ 2>/dev/null || true
           ./linuxdeploy-x86_64.AppImage \
             --appdir AppDir \
             --desktop-file AppDir/usr/share/applications/io.github.musicassistant.native.desktop \

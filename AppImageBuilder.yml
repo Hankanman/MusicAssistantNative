@@ -33,8 +33,13 @@ AppDir:
       - libkf6windowsystem-dev
       - libkf6iconthemes-dev
       - qml6-module-org-kde-kirigami
+      - qml6-module-org-kde-kirigamiaddons-formcard
+      - qml6-module-org-kde-desktop
       - qml6-module-qtquick-controls
       - qml6-module-qtquick-layouts
+      - qml6-module-qtquick-templates
+      - qml6-module-qtquick-effects
+      - qt6-wayland
 
   runtime:
     env:
